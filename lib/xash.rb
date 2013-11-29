@@ -1,5 +1,10 @@
 require "xash/version"
+require 'roconv'
 
-module Xash
-  # Your code goes here...
+module XASH
+    extend self
+
+    def eval(code)
+        code = Roconv.convert(code)
+    end
 end

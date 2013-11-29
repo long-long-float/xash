@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Xash::VERSION
   spec.authors       = ["long-long-float"]
   spec.email         = ["niinikazuki@yahoo.co.jp"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
-  spec.homepage      = ""
+  spec.description   = %q{XASH is a external DSL which can be written in YAML!}
+  spec.summary       = %q{}
+  spec.homepage      = "https://github.com/long-long-float/xash"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
@@ -20,4 +20,5 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
+  spec.add_development_dependency "roconv"
 end
