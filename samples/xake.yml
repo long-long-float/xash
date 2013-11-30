@@ -1,0 +1,10 @@
+#make of xash
+#http://ja.wikipedia.org/wiki/Rake
+- rule: [ '.o', '.c',
+    do: [ t,
+        sh: { concat: [ "cc -c -o", { $t: name}, { $t: source } ] }
+    ]
+]
+- file: ['hello', array: ['hello.o'],
+    do: { sh: "cc -o hello hello.o" }
+]

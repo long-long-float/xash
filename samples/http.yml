@@ -1,0 +1,11 @@
+#sinatra風
+- get: ['/',
+    do: [ _,
+        hello
+    ]
+]
+- get: ['/hello/:name',
+    do: [ param,
+        eval_expr: [ hello, +,  $param: name ]
+    ]
+]
