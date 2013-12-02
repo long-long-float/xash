@@ -1,5 +1,39 @@
-- for: [0...10,
+- for: [1..10,
     do: [[i],
         puts: $i
+    ]
+]
+
+- puts: 
+
+#Python style
+- for:
+    - 1..10
+    - do: 
+        - [i]
+        - puts: $i
+
+- puts:
+
+- for: [ array: [Ruby, Python, Perl] ,
+    do: [[i],
+        puts: $i
+    ]
+]
+
+- puts: 
+
+- for:
+    - object: { name: long_long_float, age: 9999 }
+    - do:
+        - [k, v]
+        - print: [[$k, ' => ', $v]]
+        - puts: 
+
+- puts: 
+
+- for: [hello,
+    do: [[c],
+        print: [[$c, ', ']]
     ]
 ]
