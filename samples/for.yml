@@ -24,7 +24,7 @@
 - puts: 
 
 - for:
-    - { name: long_long_float, age: 9999 }
+    - object: { name: long_long_float, age: 9999 }
     - do:
         - [k, v]
         - print: [[$k, ' => ', $v]]
