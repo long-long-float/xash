@@ -83,9 +83,7 @@ module XASH
             when ->(expr){ expr.class == String and expr =~ /\$(\w+)/ }
                 #local variables
                 var_name = $1
-                @context.get_local_variable(var_name).tap do |val|
-                    #puts "get local variable! #{var_name} : #{val}"
-                end
+                @context.get_local_variable(var_name)
             else
                 #primitives
                 expr
