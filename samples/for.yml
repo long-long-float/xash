@@ -1,6 +1,6 @@
 - for: [1..10,
     do: [[i],
-        puts: $i
+        print: [[$i, ', ']]
     ]
 ]
 
@@ -11,13 +11,13 @@
     - 1..10
     - do: 
         - [i]
-        - puts: $i
+        - print: [[$i, ', ']]
 
 - puts:
 
 - for: [ array: [Ruby, Python, Perl] ,
     do: [[i],
-        puts: $i
+        print: [[$i, ', ']]
     ]
 ]
 
