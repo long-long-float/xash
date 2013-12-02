@@ -4,13 +4,18 @@ require 'pp'
 
 module XASH
 
+    class UndefinedFunctionError < StandardError
+    end
+
+    class UndefinedLocalVariable < StandardError
+    end
+
     class Evaluator
         class Context < Struct.new(:lambda, :lambda_args)
             def get_local_variable(name)
                 idx = lambda[0].index(name)
                 unless idx
-                    #TODO raise exception
-                    raise "local variable #{name} not found!"
+                    raise UndefinedLocalVariable, "undefined local variable `#{name}`"
                 end
                 lambda_args[idx]
             end
@@ -78,6 +83,9 @@ module XASH
                 when 'do' #lambda
                     expr
                 else #other functions
+                    unless @function_table.key? k
+                        raise UndefinedFunctionError, "called undefiend function `#{k}`"
+                    end
                     eval_lambda(@function_table[k], eval_expr(v))
                 end
             when ->(expr){ expr.class == String and expr =~ /\$(\w+)/ }
