@@ -1,4 +1,4 @@
-require "xash/version"
+require 'xash/version'
 require 'roconv'
 require 'pp'
 
@@ -8,6 +8,9 @@ module XASH
     end
 
     class UndefinedLocalVariable < StandardError
+    end
+
+    class TypeError < StandardError
     end
 
     class Evaluator
@@ -51,11 +54,16 @@ module XASH
             exprs.each{|expr| eval_expr(expr) }
         end
 
+        def lambda?(lambda)
+            lambda.to_a[0] == 'do'
+        end
+
         def to_collection(collection)
             case collection
             when Range
                 [*collection]
             else
+                raise TypeError, "`#{collection}` is not collection" unless collection.respond_to? :to_a
                 collection.to_a
             end
         end
@@ -66,13 +74,17 @@ module XASH
                 expr.map{ |e| eval_expr(e) }
             when Hash
                 k, v = expr.to_a[0]
+
+                if k != 'do'
+                    k = eval_expr(k)
+                    v = eval_expr(v)
+                end
+
                 case k
                 when '__puts' #pseudo functions
-                    v = eval_expr(v)
                     puts v
                 when '__for'
                     #check_arg(v, 2) or check_arg(v, :collection, :lambda)
-                    v = eval_expr(v)
                     collection, lambda = v[0], v[1]
 
                     collection = to_collection(collection)
@@ -81,12 +93,14 @@ module XASH
                         eval_lambda(lambda, e)
                     end
                 when 'do' #lambda
-                    expr
+                    expr #lazy evaluation
+                when ->(k) { k.class == Hash and lambda?(k) } #lambda call
+                    eval_lambda(k, v)
                 else #other functions
                     unless @function_table.key? k
                         raise UndefinedFunctionError, "called undefiend function `#{k}`"
                     end
-                    eval_lambda(@function_table[k], eval_expr(v))
+                    eval_lambda(@function_table[k], v)
                 end
             when ->(expr){ expr.class == String and expr =~ /\$(\w+)/ }
                 #local variables
