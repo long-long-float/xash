@@ -56,9 +56,12 @@ module XASH
 
             @context_stack.push(Context.new(lambda, args))
 
-            exprs.each{|expr| eval_expr(expr) }
+            ret = nil
+            exprs.each{|expr| ret = eval_expr(expr) }
 
             @context_stack.pop
+
+            ret
         end
 
         def check_args(args, *types)
@@ -132,7 +135,7 @@ module XASH
 
                     collection = to_collection(collection)
 
-                    collection.each do |e|
+                    collection.map do |e|
                         eval_lambda(lambda, e)
                     end
                 when '__def'
@@ -149,6 +152,8 @@ module XASH
                 when 'object'
                     check_arg(v, :object)
                     v
+                when 'range'
+                    Range.new(v[0], v[1])
                 when 'do' #lambda
                     expr #for lazy evaluation
 

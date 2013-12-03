@@ -1,3 +1,4 @@
 require 'xash'
 require 'yaml'
-XASH.eval(YAML.load_file(ARGV[0]))
+require 'pp'
+pp XASH.eval(YAML.load_file(ARGV[0]))

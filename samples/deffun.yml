@@ -5,3 +5,21 @@
 ]
 
 - say: long-long-float
+
+- def: [get_name,
+    do: [[],
+        hoge
+    ]
+]
+
+- say: { get_name: }
+
+- def: [say_times,
+    do: [[name, num],
+        for: [ range: [0, $num],
+            puts: { say: $name}
+        ]
+    ]
+]
+
+- say_times: [long-long-float, 10]
