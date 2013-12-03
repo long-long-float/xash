@@ -1,0 +1,7 @@
+- def: [say,
+    do:[[name]
+        print [hello, $name, "\n"]
+    ]
+]
+
+- say: long-long-float

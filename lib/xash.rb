@@ -42,7 +42,9 @@ module XASH
             @function_table = {
                 'puts' => wrap_pseudo_function(['object'], '__puts'),
                 'print' => wrap_pseudo_function(['object'], '__print'),
-                'for' => wrap_pseudo_function(['collection', 'function'], '__for')
+                'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
+                # define function
+                'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def')
             }
         end
 
@@ -81,6 +83,10 @@ module XASH
 
         def lambda?(lambda)
             lambda.to_a[0][0] == 'do'
+        end
+
+        def string?(string)
+            string.class == String
         end
 
         def collection?(collection)
@@ -122,14 +128,20 @@ module XASH
                 when '__for'
                     check_args(v, :collection, :lambda)
 
-                    collection, lambda = v[0], v[1]
+                    collection, lambda = v
 
                     collection = to_collection(collection)
 
                     collection.each do |e|
                         eval_lambda(lambda, e)
                     end
+                when '__def'
+                    check_args(v, :string, :lambda)
 
+                    name, lambda = v
+
+                    @function_table[name] = lambda
+                
                 #literals
                 when 'array'
                     check_arg(v, :array)
