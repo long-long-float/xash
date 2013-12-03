@@ -14,13 +14,50 @@ module XASH
     end
 
     class Evaluator
-        class Context < Struct.new(:lambda, :lambda_args)
-            def get_local_variable(name)
-                idx = lambda[0].index(name)
-                unless idx
-                    raise UndefinedLocalVariableError, "undefined local variable `#{name}`"
+        class Context
+            def initialize(lambda, lambda_args)
+                @variable_table = {}
+                lambda_args = lambda_args.dup
+                lambda[0].each do |arg|
+                    @variable_table[arg] = lambda_args.shift
                 end
-                lambda_args[idx]
+            end
+
+            def local_variable(name)
+                @variable_table[name]
+            end
+
+            def set_local_variable(name, val)
+                if @variable_table.key? name
+                    STDERR.puts "`#{name}` is already assigned!"
+                end
+                @variable_table[name] = val
+            end
+        end
+
+        class ContextStack
+            def initialize
+                @context_stack = []
+            end
+
+            def local_variable(name)
+                @context_stack.reverse_each do |context|
+                    if val = context.local_variable(context)
+                        return val
+                    end
+                end
+                raise UndefinedLocalVariableError, "undefined local variable `#{name}`"
+            end
+
+            def set_local_variable(name, val)
+                @context_stack.top.set_local_variable(name, val)
+            end
+
+            def scope(lambda, lambda_args)
+                @context_stack.push(Context.new(lambda, lambda_args))
+                ret = yield
+                @context_stack.pop
+                ret
             end
         end
 
@@ -37,14 +74,15 @@ module XASH
         end
 
         def initialize
-            @context_stack = []
+            @context_stack = ContextStack.new
 
             @function_table = {
                 'puts' => wrap_pseudo_function(['object'], '__puts'),
                 'print' => wrap_pseudo_function(['object'], '__print'),
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 # define function
-                'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def')
+                'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
+                'assign' => wrap_pseudo_function(['variable_name', 'value'], '__assign')
             }
         end
 
@@ -54,24 +92,22 @@ module XASH
 
             args = [args] unless args.class == Array
 
-            @context_stack.push(Context.new(lambda, args))
-
-            ret = nil
-            exprs.each{|expr| ret = eval_expr(expr) }
-
-            @context_stack.pop
-
-            ret
+            @context_stack.scope(lambda, args) do
+                ret = nil
+                exprs.each{|expr| ret = eval_expr(expr) }
+            end
         end
 
         def check_args(args, *types)
             args.zip(types) do |arg, type|
-               check_arg(arg, type) 
+                next unless type
+                check_arg(arg, type) 
             end
             nil
         end
 
         def check_arg(arg, type)
+            puts "check #{arg} is #{type}"
             raise TypeError, "`#{arg}` is not `#{type}`" unless self.send("#{type}?", arg)
             nil
         end
@@ -144,7 +180,13 @@ module XASH
                     name, lambda = v
 
                     @function_table[name] = lambda
-                
+                when '__assign'
+                    check_args(v, :string)
+
+                    name, val = v
+
+                    @context_stack.set_local_variable(name, val)
+
                 #literals
                 when 'array'
                     check_arg(v, :array)
@@ -169,7 +211,7 @@ module XASH
             when ->(expr){ expr.class == String and expr =~ /\$(\w+)/ }
                 #local variables
                 var_name = $1
-                @context_stack.last.get_local_variable(var_name)
+                @context_stack.local_variable(var_name)
             else
                 #primitives
                 expr
