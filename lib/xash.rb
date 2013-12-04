@@ -99,13 +99,14 @@ module XASH
             @context_stack.scope(lambda, args) do
                 ret = nil
                 exprs.each{|expr| ret = eval_expr(expr) }
+                ret
             end
         end
 
         def check_args(args, *types)
             args.zip(types) do |arg, type|
                 next unless type
-                check_arg(arg, type) 
+                check_arg(arg, type)
             end
             nil
         end
