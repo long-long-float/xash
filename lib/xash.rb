@@ -23,6 +23,10 @@ module XASH
                 end
             end
 
+            def defined_local_variable?(name)
+                @variable_table.include? name
+            end
+
             def local_variable(name)
                 @variable_table[name]
             end
@@ -42,8 +46,8 @@ module XASH
 
             def local_variable(name)
                 @context_stack.reverse_each do |context|
-                    if val = context.local_variable(context)
-                        return val
+                    if context.defined_local_variable?(name)
+                        return context.local_variable(name)
                     end
                 end
                 raise UndefinedLocalVariableError, "undefined local variable `#{name}`"
@@ -107,7 +111,6 @@ module XASH
         end
 
         def check_arg(arg, type)
-            puts "check #{arg} is #{type}"
             raise TypeError, "`#{arg}` is not `#{type}`" unless self.send("#{type}?", arg)
             nil
         end
