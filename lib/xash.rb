@@ -3,7 +3,6 @@ require 'roconv'
 require 'pp'
 
 module XASH
-
     class UndefinedFunctionError < StandardError
     end
 
@@ -33,7 +32,7 @@ module XASH
 
             def set_local_variable(name, val)
                 if @variable_table.key? name
-                    STDERR.puts "`#{name}` is already assigned!"
+                    STDERR.puts "`#{name}` has been already assigned!"
                 end
                 @variable_table[name] = val
             end
@@ -42,6 +41,9 @@ module XASH
         class ContextStack
             def initialize
                 @context_stack = []
+
+                #root context
+                @context_stack.push(Context.new([[]], []))
             end
 
             def local_variable(name)
@@ -54,7 +56,7 @@ module XASH
             end
 
             def set_local_variable(name, val)
-                @context_stack.top.set_local_variable(name, val)
+                @context_stack.last.set_local_variable(name, val)
             end
 
             def scope(lambda, lambda_args)
@@ -81,13 +83,19 @@ module XASH
             @context_stack = ContextStack.new
 
             @function_table = {
-                'puts' => wrap_pseudo_function(['object'], '__puts'),
                 'print' => wrap_pseudo_function(['object'], '__print'),
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'assign' => wrap_pseudo_function(['variable_name', 'value'], '__assign')
+                #literals
+                'array' => wrap_pseudo_function(['ary'], '__ary')
+                'object' => wrap_pseudo_function(['obj'], '__object')
+                'range' => wrap_pseudo_function(['a', 'b'], '__range')
             }
+
+            #とりあえず
+            eval(YAML.load_file('lib/kernel.yml'))
         end
 
         def eval_lambda(lambda, args)
@@ -164,9 +172,8 @@ module XASH
 
                 case k
                 #pseudo functions
-                when '__puts'
-                    puts v
                 when '__print'
+                    pp v
                     print v.join
                 when '__for'
                     check_args(v, :collection, :lambda)
@@ -189,17 +196,17 @@ module XASH
 
                     name, val = v
 
+                    #FIXME : assignのコンテキストなので、ここでセットしても意味がない
                     @context_stack.set_local_variable(name, val)
-
-                #literals
-                when 'array'
+                when '__array'
                     check_arg(v, :array)
                     v
-                when 'object'
+                when '__object'
                     check_arg(v, :object)
                     v
-                when 'range'
+                when '__range'
                     Range.new(v[0], v[1])
+
                 when 'do' #lambda
                     expr #for lazy evaluation
 
@@ -228,7 +235,7 @@ module XASH
         end
     end
 
-    def self.eval(code)
+    def eval(code)
         e = Evaluator.new
         e.eval(code)
     end
