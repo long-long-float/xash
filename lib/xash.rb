@@ -65,7 +65,7 @@ module XASH
 
             def scope(lambda, lambda_args)
                 @context_stack.push(Context.new(lambda, lambda_args))
-                ret = yield
+                ret = yield(self)
                 @context_stack.pop
                 ret
             end
@@ -93,7 +93,7 @@ module XASH
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
                 #literals
-                'array' => wrap_pseudo_function(['ary'], '__ary'),
+                #'array' => wrap_pseudo_function([], '__array'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
                 'range' => wrap_pseudo_function(['a', 'b'], '__range'),
             }.each do |name, val|
@@ -109,9 +109,12 @@ module XASH
             lambda = lambda['do']
             lambda_args, *exprs = lambda
 
-            args = [args] unless args.class == Array
+            #args = [args] unless args.class == Array
 
-            @context_stack.scope(lambda, args) do
+            @context_stack.scope(lambda, args) do |c|
+                c.set_local_variable('it', args[0])
+                c.set_local_variable('args', args)
+
                 ret = nil
                 exprs.each{|expr| ret = eval_expr(expr) }
                 ret
@@ -172,15 +175,18 @@ module XASH
 
                 no_eval = %w(do object)
 
+                puts "k = #{k}, v = #{v}"
+
                 k = eval_expr(k)
                 unless no_eval.index(k)
                     v = eval_expr(v)
                 end
 
+                puts "k = #{k}, v = #{v}"
+
                 case k
                 #pseudo functions
                 when '__print'
-                    pp v
                     print v.join
                 when '__for'
                     check_args(v, :collection, :lambda)
@@ -189,7 +195,9 @@ module XASH
 
                     collection = to_collection(collection)
 
+                    pp collection
                     collection.map do |e|
+                        #puts "e = #{e}"
                         eval_lambda(lambda, e)
                     end
                 when '__def'
@@ -204,12 +212,10 @@ module XASH
                     old, new = v
 
                     @context_stack.assign(new, @context_stack.local_variable(old).dup)
-                when '__array'
-                    check_arg(v, :array)
-                    v
                 when '__object'
-                    check_arg(v, :object)
-                    v
+                    check_args(v, :object)
+                    puts "__object => #{v[0]}"
+                    v[0]
                 when '__range'
                     Range.new(v[0], v[1])
 

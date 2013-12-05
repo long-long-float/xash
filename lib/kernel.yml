@@ -6,3 +6,9 @@
 ]
 
 - alias: [def, assign]
+
+- def: [array,
+    do: [[],
+        $args
+    ]
+]
