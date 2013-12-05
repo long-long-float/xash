@@ -197,7 +197,7 @@ module XASH
 
                     name, lambda = v
 
-                    @function_table[name] = lambda
+                    @context_stack.assign(name, lambda)
                 when '__assign'
                     check_args(v, :string)
 
