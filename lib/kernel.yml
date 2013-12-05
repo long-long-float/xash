@@ -1,0 +1,8 @@
+#kernel library
+- def: [puts,
+    do: [[object],
+        print: [[$object, "\n"]]
+    ]
+]
+
+- alias: [def, assign]
