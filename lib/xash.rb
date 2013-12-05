@@ -91,7 +91,7 @@ module XASH
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
-                'assign' => wrap_pseudo_function(['variable_name', 'value'], '__assign'),
+                'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
                 #literals
                 'array' => wrap_pseudo_function(['ary'], '__ary'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
@@ -140,7 +140,7 @@ module XASH
         end
 
         def lambda?(lambda)
-            lambda.to_a[0][0] == 'do'
+            lambda.is_a? Hash and lambda.to_a[0][0] == 'do'
         end
 
         def string?(string)
@@ -148,7 +148,7 @@ module XASH
         end
 
         def collection?(collection)
-            collection.class == Range or collection.class == String or collection.respond_to? :to_a
+            collection.is_a? Range or collection.is_a? String or collection.respond_to? :to_a
         end
 
         def to_collection(collection)
@@ -193,17 +193,17 @@ module XASH
                         eval_lambda(lambda, e)
                     end
                 when '__def'
-                    check_args(v, :string, :lambda)
+                    check_args(v, :string)
 
                     name, lambda = v
 
                     @context_stack.assign(name, lambda)
-                when '__assign'
-                    check_args(v, :string)
+                when '__alias'
+                    check_args(v, :string, :string)
 
-                    name, val = v
+                    old, new = v
 
-                    @context_stack.assign(name, val)
+                    @context_stack.assign(new, @context_stack.local_variable(old).dup)
                 when '__array'
                     check_arg(v, :array)
                     v
