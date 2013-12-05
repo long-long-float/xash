@@ -86,7 +86,7 @@ module XASH
         def initialize
             @context_stack = ContextStack.new
 
-            @function_table = {
+            {
                 'print' => wrap_pseudo_function(['object'], '__print'),
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 # define function
@@ -96,7 +96,9 @@ module XASH
                 'array' => wrap_pseudo_function(['ary'], '__ary'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
                 'range' => wrap_pseudo_function(['a', 'b'], '__range'),
-            }
+            }.each do |name, val|
+                @context_stack.set_local_variable(name, val)
+            end
 
             #とりあえず
 
@@ -218,10 +220,7 @@ module XASH
                 when ->(k) { k.class == Hash and lambda?(k) } #lambda call
                     eval_lambda(k, v)
                 else #others
-                    unless @function_table.key? k
-                        raise UndefinedFunctionError, "called undefiend function `#{k}`"
-                    end
-                    eval_lambda(@function_table[k], v)
+                    eval_lambda(@context_stack.local_variable(k), v)
                 end
             when ->(expr){ expr.class == String and expr =~ /\$(\w+)/ }
                 #local variables
