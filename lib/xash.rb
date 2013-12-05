@@ -59,6 +59,10 @@ module XASH
                 @context_stack.last.set_local_variable(name, val)
             end
 
+            def assign(name, val)
+                @context_stack[-2].set_local_variable(name, val)
+            end
+
             def scope(lambda, lambda_args)
                 @context_stack.push(Context.new(lambda, lambda_args))
                 ret = yield
@@ -87,15 +91,16 @@ module XASH
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
-                'assign' => wrap_pseudo_function(['variable_name', 'value'], '__assign')
+                'assign' => wrap_pseudo_function(['variable_name', 'value'], '__assign'),
                 #literals
-                'array' => wrap_pseudo_function(['ary'], '__ary')
-                'object' => wrap_pseudo_function(['obj'], '__object')
-                'range' => wrap_pseudo_function(['a', 'b'], '__range')
+                'array' => wrap_pseudo_function(['ary'], '__ary'),
+                'object' => wrap_pseudo_function(['obj'], '__object'),
+                'range' => wrap_pseudo_function(['a', 'b'], '__range'),
             }
 
             #とりあえず
-            eval(YAML.load_file('lib/kernel.yml'))
+
+            eval(YAML.load_file("#{File::dirname(__FILE__)}/kernel.yml"))
         end
 
         def eval_lambda(lambda, args)
@@ -196,8 +201,7 @@ module XASH
 
                     name, val = v
 
-                    #FIXME : assignのコンテキストなので、ここでセットしても意味がない
-                    @context_stack.set_local_variable(name, val)
+                    @context_stack.assign(name, val)
                 when '__array'
                     check_arg(v, :array)
                     v
@@ -235,7 +239,7 @@ module XASH
         end
     end
 
-    def eval(code)
+    def self.eval(code)
         e = Evaluator.new
         e.eval(code)
     end
