@@ -109,8 +109,6 @@ module XASH
             lambda = lambda['do']
             lambda_args, *exprs = lambda
 
-            #args = [args] unless args.class == Array
-
             @context_stack.scope(lambda, args) do |c|
                 c.set_local_variable('it', args[0])
                 c.set_local_variable('args', args)
@@ -175,14 +173,10 @@ module XASH
 
                 no_eval = %w(do object)
 
-                puts "k = #{k}, v = #{v}"
-
                 k = eval_expr(k)
                 unless no_eval.index(k)
                     v = eval_expr(v)
                 end
-
-                puts "k = #{k}, v = #{v}"
 
                 case k
                 #pseudo functions
@@ -195,10 +189,8 @@ module XASH
 
                     collection = to_collection(collection)
 
-                    pp collection
                     collection.map do |e|
-                        #puts "e = #{e}"
-                        eval_lambda(lambda, e)
+                        eval_lambda(lambda, [e])
                     end
                 when '__def'
                     check_args(v, :string)
