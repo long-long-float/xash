@@ -12,6 +12,9 @@ module XASH
     class TypeError < StandardError
     end
 
+    class InvalidContextIDError < StandardError
+    end
+
     class Evaluator
         class Context
             def initialize(lambda, lambda_args)
@@ -63,10 +66,17 @@ module XASH
                 @context_stack[-2].set_local_variable(name, val)
             end
 
-            def scope(lambda, lambda_args)
+            def context(lambda, lambda_args)
                 @context_stack.push(Context.new(lambda, lambda_args))
                 ret = yield(self)
                 @context_stack.pop
+                ret
+            end
+
+            def meta_context
+                current = @context_stack.pop
+                ret = yield
+                @context_stack.push(current)
                 ret
             end
         end
@@ -91,6 +101,7 @@ module XASH
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
+                'meta_context' => wrap_pseudo_function(%w(context_id lambda), '__meta_context'),
                 #literals
                 #'array' => wrap_pseudo_function([], '__array'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
@@ -108,7 +119,7 @@ module XASH
             lambda = lambda['do']
             lambda_args, *exprs = lambda
 
-            @context_stack.scope(lambda, args) do |c|
+            @context_stack.context(lambda, args) do |c|
                 c.set_local_variable('it', args[0])
                 c.set_local_variable('args', args)
 
@@ -145,6 +156,10 @@ module XASH
 
         def string?(string)
             string.class == String
+        end
+
+        def integer?(integer)
+            integer.class == Fixnum
         end
 
         def collection?(collection)
@@ -203,6 +218,19 @@ module XASH
                     old, new = v
 
                     @context_stack.assign(new, @context_stack.local_variable(old).dup)
+                when '__meta_context'
+                    check_args(v, :lambda)
+
+                    lambda = v[0]
+
+                    #current
+                    @context_stack.meta_context do
+                        #meta_context lambda
+                        @context_stack.meta_context do
+                            #meta context
+                            eval_lambda(lambda, [])
+                        end
+                    end
                 when '__object'
                     check_args(v, :object)
                     puts "__object => #{v[0]}"
@@ -214,7 +242,7 @@ module XASH
                     expr #for lazy evaluation
 
                 #function call
-                when ->(k) { k.class == Hash and lambda?(k) } #lambda call
+                when ->(k) { lambda?(k) } #lambda call
                     eval_lambda(k, v)
                 else #others
                     eval_lambda(@context_stack.local_variable(k), v)
