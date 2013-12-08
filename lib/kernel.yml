@@ -1,7 +1,13 @@
 #kernel library
+- def: [print,
+    do: [[],
+        __print: [$args]
+    ]
+]
+
 - def: [puts,
-    do: [[object],
-        print: [[$object, "\n"]]
+    do: [[],
+        print: [$args, "\n"]
     ]
 ]
 

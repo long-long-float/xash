@@ -87,7 +87,6 @@ module XASH
             @context_stack = ContextStack.new
 
             {
-                'print' => wrap_pseudo_function(['object'], '__print'),
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
