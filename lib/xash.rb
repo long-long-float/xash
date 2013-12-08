@@ -33,6 +33,10 @@ module XASH
                 @variable_table[name]
             end
 
+            def local_variables
+                @variable_table.dup
+            end
+
             def set_local_variable(name, val)
                 if @variable_table.key? name
                     STDERR.puts "`#{name}` has been already assigned!"
@@ -49,6 +53,15 @@ module XASH
                 @context_stack.push(Context.new([[]], []))
             end
 
+            def exist_local_variable?(name)
+                @context_stack.reverse_each do |context|
+                    if context.defined_local_variable?(name)
+                        return true
+                    end
+                end
+                false
+            end
+
             def local_variable(name)
                 @context_stack.reverse_each do |context|
                     if context.defined_local_variable?(name)
@@ -56,6 +69,10 @@ module XASH
                     end
                 end
                 raise UndefinedLocalVariableError, "undefined local variable `#{name}`"
+            end
+
+            def local_variables
+                @context_stack.last.local_variables
             end
 
             def set_local_variable(name, val)
@@ -101,7 +118,8 @@ module XASH
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
-                'meta_context' => wrap_pseudo_function(%w(context_id lambda), '__meta_context'),
+                'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
+                'local_variables' => wrap_pseudo_function([], '__local_variables'),
                 #literals
                 #'array' => wrap_pseudo_function([], '__array'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
@@ -124,7 +142,13 @@ module XASH
                 c.set_local_variable('args', args)
 
                 ret = nil
-                exprs.each{|expr| ret = eval_expr(expr) }
+                exprs.each do |expr|
+                    ret = eval_expr(expr)
+                    if c.exist_local_variable?('next_value')
+                        ret = c.local_variable('next_value')
+                        break
+                    end
+                end
                 ret
             end
         end
@@ -219,18 +243,26 @@ module XASH
 
                     @context_stack.assign(new, @context_stack.local_variable(old).dup)
                 when '__meta_context'
-                    check_args(v, :lambda)
+                    check_args(v, :array, :lambda)
 
-                    lambda = v[0]
+                    args, lambda = v
 
                     #current
                     @context_stack.meta_context do
                         #meta_context lambda
                         @context_stack.meta_context do
                             #meta context
-                            eval_lambda(lambda, [])
+                            eval_lambda(lambda, args)
                         end
                     end
+                when '__next'
+                    ret_val = v[0]
+
+                    @context_stack.next(ret_val)
+
+                    ret_val
+                when '__local_variables'
+                    @context_stack.local_variables
                 when '__object'
                     check_args(v, :object)
                     puts "__object => #{v[0]}"

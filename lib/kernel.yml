@@ -18,3 +18,13 @@
         $args
     ]
 ]
+
+- def: [next,
+    do: [[next_value],
+        meta_context: [[$next_value],
+            do: [[],
+                assign: [next_value, $it]
+            ]
+        ]
+    ]
+]

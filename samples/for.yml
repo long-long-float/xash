@@ -6,15 +6,6 @@
 
 - puts: []
 
-#Python style
-- for:
-    - 1..10
-    - do: 
-        - []
-        - print: [$it, ', ']
-
-- puts: []
-
 - for: [ array: [Ruby, Python, Perl] ,
     do: [[],
         print: [$it, ', ']
