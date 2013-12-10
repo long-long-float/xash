@@ -21,7 +21,7 @@ module XASH
         def error(klass, msg)
             cc = @context_stack.current
             raise klass, <<-EOS
-variables : #{cc.local_variables.to_yaml}
+variables : #{cc.variables.to_yaml}
 lambda body : #{cc.lambda_body}
 #{@context_stack.current} : #{msg}
             EOS
@@ -58,15 +58,15 @@ lambda body : #{cc.lambda_body}
                 ret
             end
 
-            def defined_local_variable?(name)
+            def defined_variable?(name)
                 @variable_table.include?(name) || @attached_table && @attached_table.include?(name)
             end
 
-            def local_variable(name)
+            def variable(name)
                 @variable_table[name] || @attached_table && @attached_table[name]
             end
 
-            def local_variables
+            def variables
                 @variable_table.merge(@attached_table || {})
             end
 
@@ -90,24 +90,24 @@ lambda body : #{cc.lambda_body}
 
             def exist_local_variable?(name)
                 @context_stack.reverse_each do |context|
-                    if context.defined_local_variable?(name)
+                    if context.defined_variable?(name)
                         return true
                     end
                 end
                 false
             end
 
-            def local_variable(name)
+            def variable(name)
                 @context_stack.reverse_each do |context|
-                    if context.defined_local_variable?(name)
-                        return context.local_variable(name)
+                    if context.defined_variable?(name)
+                        return context.variable(name)
                     end
                 end
                 @evaluator.error UndefinedLocalVariableError, "undefined local variable `#{name}`"
             end
 
-            def local_variables
-                @context_stack.last.local_variables
+            def variables
+                @context_stack.last.variables
             end
 
             def set_local_variable(name, val)
@@ -164,7 +164,7 @@ lambda body : #{cc.lambda_body}
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
-                'local_variables' => wrap_pseudo_function([], '__local_variables'),
+                'variables' => wrap_pseudo_function([], '__local_variables'),
                 #literals
                 #'array' => wrap_pseudo_function([], '__array'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
@@ -186,7 +186,7 @@ lambda body : #{cc.lambda_body}
             exprs.each do |expr|
                 ret = eval_expr(expr)
                 if context.exist_local_variable?('next_value')
-                    ret = context.local_variable('next_value')
+                    ret = context.variable('next_value')
                     break
                 end
             end
@@ -300,7 +300,7 @@ lambda body : #{cc.lambda_body}
 
                     old, new = v
 
-                    @context_stack.assign(new, @context_stack.local_variable(old).dup)
+                    @context_stack.assign(new, @context_stack.variable(old).dup)
                 when '__meta_context'
                     check_args(v, :array, :lambda)
 
@@ -321,7 +321,7 @@ lambda body : #{cc.lambda_body}
 
                     ret_val
                 when '__local_variables'
-                    @context_stack.local_variables
+                    @context_stack.variables
                 when '__object'
                     check_args(v, :object)
                     puts "__object => #{v[0]}"
@@ -336,12 +336,12 @@ lambda body : #{cc.lambda_body}
                 when ->(k) { lambda?(k) } #lambda call
                     push_context(k, v)
                 else #others
-                    push_context(@context_stack.local_variable(k), v)
+                    push_context(@context_stack.variable(k), v)
                 end
             when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
                 #local variables
                 var_name = $1
-                @context_stack.local_variable(var_name)
+                @context_stack.variable(var_name)
             else
                 #primitives
                 expr
