@@ -70,8 +70,8 @@ lambda body : #{cc.lambda_body}
                 @variable_table.merge(@attached_table || {})
             end
 
-            def set_local_variable(name, val)
-                if @variable_table.key? name
+            def set_local_variable(name, val, with_warn)
+                if with_warn && @variable_table.key? name
                     warn "`#{name}` has been already assigned!"
                 end
                 @variable_table[name] = val
@@ -110,8 +110,8 @@ lambda body : #{cc.lambda_body}
                 @context_stack.last.variables
             end
 
-            def set_local_variable(name, val)
-                @context_stack.last.set_local_variable(name, val)
+            def set_local_variable(name, val, with_warn = false)
+                @context_stack.last.set_local_variable(name, val, with_warn)
             end
 
             def assign(name, val)
@@ -205,8 +205,8 @@ lambda body : #{cc.lambda_body}
 
         def attach_context(lambda, args)
             @context_stack.attach(lambda['do'], args) do |c|
-                c.set_local_variable('it', args[0])
-                c.set_local_variable('args', args)
+                c.set_local_variable('it', args[0], false)
+                c.set_local_variable('args', args, false)
 
                 eval_lambda(lambda, args, c)
             end
