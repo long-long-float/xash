@@ -197,6 +197,7 @@ lambda body : #{cc.lambda_body}
             @context_stack.context(lambda['do'], args) do |c|
                 c.set_local_variable('it', args[0])
                 c.set_local_variable('args', args)
+                c.set_local_variable('self', lambda)
 
                 eval_lambda(lambda, args, c)
             end

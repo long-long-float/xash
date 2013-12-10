@@ -1,0 +1,8 @@
+- def: [rec,
+    do: [[],
+        { puts: [recursive!] },
+        { self: [] }
+    ]
+]
+
+- rec: []
