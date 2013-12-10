@@ -171,7 +171,7 @@ lambda body : #{cc.lambda_body}
 
             #とりあえず
 
-            eval(YAML.load_file("#{File::dirname(__FILE__)}/kernel.yml"))
+            #eval(YAML.load_file("#{File::dirname(__FILE__)}/kernel.yml"))
         end
 
         def eval_lambda(lambda, args)

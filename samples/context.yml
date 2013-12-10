@@ -1,0 +1,12 @@
+- assign: [a, 10]
+- def: [func,
+    do: [[],
+        { assign: [a, 20] },
+        { meta_context: [[],
+            do: [[],
+                puts: [$a] #10
+            ]
+        ]}
+    ]
+]
+- func: []

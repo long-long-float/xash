@@ -1,0 +1,5 @@
+- puts: [hello!]
+
+- next: [10]
+
+- puts: [hello!] # does not reach
