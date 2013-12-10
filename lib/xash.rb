@@ -27,6 +27,10 @@ lambda body : #{cc.lambda_body}
             EOS
         end
 
+        def warn(msg)
+            STDERR.puts msg
+        end
+
         class Context
             attr_reader :lambda_body
 
@@ -68,7 +72,7 @@ lambda body : #{cc.lambda_body}
 
             def set_local_variable(name, val)
                 if @variable_table.key? name
-                    STDERR.puts "`#{name}` has been already assigned!"
+                    warn "`#{name}` has been already assigned!"
                 end
                 @variable_table[name] = val
             end
@@ -143,7 +147,7 @@ lambda body : #{cc.lambda_body}
             { name => args }
         end
 
-        def make_lambda(args, *exprs)
+        def make_lambda(args, exprs)
             { 'do' => [args, *exprs] }
         end
 
@@ -171,18 +175,18 @@ lambda body : #{cc.lambda_body}
 
             #とりあえず
 
-            #eval(YAML.load_file("#{File::dirname(__FILE__)}/kernel.yml"))
+            attach_context(make_lambda([], YAML.load_file("#{File::dirname(__FILE__)}/kernel.yml")), [])
         end
 
-        def eval_lambda(lambda, args)
+        def eval_lambda(lambda, args, context)
             lambda = lambda['do']
             lambda_args, *exprs = lambda
 
             ret = nil
             exprs.each do |expr|
                 ret = eval_expr(expr)
-                if c.exist_local_variable?('next_value')
-                    ret = c.local_variable('next_value')
+                if context.exist_local_variable?('next_value')
+                    ret = context.local_variable('next_value')
                     break
                 end
             end
@@ -194,13 +198,16 @@ lambda body : #{cc.lambda_body}
                 c.set_local_variable('it', args[0])
                 c.set_local_variable('args', args)
 
-                eval_lambda(lambda, args)
+                eval_lambda(lambda, args, c)
             end
         end
 
         def attach_context(lambda, args)
             @context_stack.attach(lambda['do'], args) do |c|
-                eval_lambda(lambda, args)
+                c.set_local_variable('it', args[0])
+                c.set_local_variable('args', args)
+
+                eval_lambda(lambda, args, c)
             end
         end
 
@@ -279,7 +286,7 @@ lambda body : #{cc.lambda_body}
                     collection = to_collection(collection)
 
                     collection.map do |e|
-                        eval_lambda(lambda, [e])
+                        push_context(lambda, [e])
                     end
                 when '__def'
                     check_args(v, :string)
@@ -326,9 +333,9 @@ lambda body : #{cc.lambda_body}
 
                 #function call
                 when ->(k) { lambda?(k) } #lambda call
-                    eval_lambda(k, v)
+                    push_context(k, v)
                 else #others
-                    eval_lambda(@context_stack.local_variable(k), v)
+                    push_context(@context_stack.local_variable(k), v)
                 end
             when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
                 #local variables
@@ -342,7 +349,7 @@ lambda body : #{cc.lambda_body}
 
         def eval(code)
             code = Roconv.convert(code)
-            eval_expr(code)
+            push_context(make_lambda([], code), [])
         end
     end
 
