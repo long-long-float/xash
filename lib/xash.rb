@@ -1,6 +1,7 @@
 require 'xash/version'
 require 'roconv'
 require 'pp'
+require 'yaml'
 
 module XASH
     class UndefinedFunctionError < StandardError
@@ -16,25 +17,53 @@ module XASH
     end
 
     class Evaluator
+
+        def error(klass, msg)
+            cc = @context_stack.current
+            raise klass, <<-EOS
+variables : #{cc.local_variables.to_yaml}
+lambda body : #{cc.lambda_body}
+#{@context_stack.current} : #{msg}
+            EOS
+        end
+
         class Context
+            attr_reader :lambda_body
+
             def initialize(lambda, lambda_args)
                 @variable_table = {}
                 lambda_args = lambda_args.dup
                 lambda[0].each do |arg|
                     @variable_table[arg] = lambda_args.shift
                 end
+
+                @lambda_body = lambda[1]
+            end
+
+            def attach(lambda, lambda_args)
+                @attached_table = {}
+                lambda_args = lambda_args.dup
+                lambda[0].each do |arg|
+                    @attached_table[arg] = lambda_args.shift
+                end
+
+                ret = yield
+
+                @attached_table = nil
+
+                ret
             end
 
             def defined_local_variable?(name)
-                @variable_table.include? name
+                @variable_table.include?(name) || @attached_table && @attached_table.include?(name)
             end
 
             def local_variable(name)
-                @variable_table[name]
+                @variable_table[name] || @attached_table && @attached_table[name]
             end
 
             def local_variables
-                @variable_table.dup
+                @variable_table.merge(@attached_table || {})
             end
 
             def set_local_variable(name, val)
@@ -46,7 +75,9 @@ module XASH
         end
 
         class ContextStack
-            def initialize
+            def initialize(evaluator)
+                @evaluator = evaluator
+
                 @context_stack = []
 
                 #root context
@@ -68,7 +99,7 @@ module XASH
                         return context.local_variable(name)
                     end
                 end
-                raise UndefinedLocalVariableError, "undefined local variable `#{name}`"
+                @evaluator.error UndefinedLocalVariableError, "undefined local variable `#{name}`"
             end
 
             def local_variables
@@ -90,11 +121,21 @@ module XASH
                 ret
             end
 
+            def attach(lambda, lambda_args)
+                @context_stack.last.attach(lambda, lambda_args) do
+                    yield(self)
+                end
+            end
+
             def meta_context
                 current = @context_stack.pop
                 ret = yield
                 @context_stack.push(current)
                 ret
+            end
+
+            def current
+                @context_stack.last.dup
             end
         end
 
@@ -111,7 +152,7 @@ module XASH
         end
 
         def initialize
-            @context_stack = ContextStack.new
+            @context_stack = ContextStack.new(self)
 
             {
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
@@ -137,19 +178,29 @@ module XASH
             lambda = lambda['do']
             lambda_args, *exprs = lambda
 
-            @context_stack.context(lambda, args) do |c|
+            ret = nil
+            exprs.each do |expr|
+                ret = eval_expr(expr)
+                if c.exist_local_variable?('next_value')
+                    ret = c.local_variable('next_value')
+                    break
+                end
+            end
+            ret
+        end
+
+        def push_context(lambda, args)
+            @context_stack.context(lambda['do'], args) do |c|
                 c.set_local_variable('it', args[0])
                 c.set_local_variable('args', args)
 
-                ret = nil
-                exprs.each do |expr|
-                    ret = eval_expr(expr)
-                    if c.exist_local_variable?('next_value')
-                        ret = c.local_variable('next_value')
-                        break
-                    end
-                end
-                ret
+                eval_lambda(lambda, args)
+            end
+        end
+
+        def attach_context(lambda, args)
+            @context_stack.attach(lambda['do'], args) do |c|
+                eval_lambda(lambda, args)
             end
         end
 
@@ -162,7 +213,7 @@ module XASH
         end
 
         def check_arg(arg, type)
-            raise TypeError, "`#{arg}` is not `#{type}`" unless self.send("#{type}?", arg)
+            error TypeError, "`#{arg}` is not `#{type}`" unless self.send("#{type}?", arg)
             nil
         end
 
@@ -197,7 +248,7 @@ module XASH
             when String
                 collection.each_char.to_a
             else
-                raise TypeError, "`#{collection}` is not collection" unless collection? collection
+                error TypeError, "`#{collection}` is not collection" unless collection? collection
                 collection.to_a
             end
         end
@@ -252,7 +303,7 @@ module XASH
                         #meta_context lambda
                         @context_stack.meta_context do
                             #meta context
-                            eval_lambda(lambda, args)
+                            attach_context(lambda, args)
                         end
                     end
                 when '__next'
@@ -279,7 +330,7 @@ module XASH
                 else #others
                     eval_lambda(@context_stack.local_variable(k), v)
                 end
-            when ->(expr){ expr.class == String and expr =~ /\$(\w+)/ }
+            when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
                 #local variables
                 var_name = $1
                 @context_stack.local_variable(var_name)
