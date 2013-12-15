@@ -270,7 +270,8 @@ lambda body : #{cc.lambda_body}
             '+' => ->(l, r){ l + r },
             '-' => ->(l, r){ l - r },
             'mul' => ->(l, r){ l * r },
-            'div' => ->(l, r){ l / r }
+            'div' => ->(l, r){ l / r },
+            'mod' => ->(l, r){ l % r }
         }
 
         #convert tokens to "Reverse Polish Notation"
@@ -348,8 +349,7 @@ lambda body : #{cc.lambda_body}
                 when '__local_variables'
                     @context_stack.variables
                 when '__expr'
-                    check_args(v, :string)
-
+                    
                     tokens = @context_stack.variable('args')
 
                     rpn = []
