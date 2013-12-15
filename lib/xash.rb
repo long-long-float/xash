@@ -261,9 +261,19 @@ lambda body : #{cc.lambda_body}
             end
         end
 
+        OPERATORS = {
+            'or' => ->(l, r){ l || r },
+            'and' => ->(l, r){ l && r },
+            'xor' => ->(l, r){ l ^ r },
+            '+' => ->(l, r){ l + r },
+            '-' => ->(l, r){ l - r },
+            'mul' => ->(l, r){ l * r },
+            'div' => ->(l, r){ l / r }
+        }
+
         #convert tokens to "Reverse Polish Notation"
         def to_rpn(tokens, rpn)
-            %w(+ - mul div).each do |ope|
+            OPERATORS.each_key do |ope|
                 if idx = tokens.index(ope)
                     to_rpn(tokens[0...idx], rpn)
                     to_rpn(tokens[(idx + 1)...tokens.size], rpn)
@@ -343,18 +353,11 @@ lambda body : #{cc.lambda_body}
                     rpn = []
                     to_rpn(tokens, rpn)
 
-                    operators = {
-                        '+' => ->(l, r){ l + r },
-                        '-' => ->(l, r){ l - r },
-                        'mul' => ->(l, r){ l * r },
-                        'div' => ->(l, r){ l / r }
-                    }
-
                     stack = []
                     rpn.each do |token|
-                        stack << if operators.key? token
+                        stack << if OPERATORS.key? token
                                 r, l = stack.pop, stack.pop
-                                operators[token][l, r]
+                                OPERATORS[token][l, r]
                             else
                                 token
                             end
