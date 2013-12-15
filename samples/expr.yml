@@ -4,3 +4,6 @@
 - puts: [ expr: [true, or, false]] #=> true
 - puts: [ expr: [true, and, false]] #=> false
 - puts: [ expr: [true, xor, false]] #=> true
+
+- puts: [ expr: [1, +, 2, ==, 3]] #=> true
+- puts: [ expr: [1, +, 2, /=, 3]] #=> false
