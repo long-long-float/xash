@@ -155,6 +155,10 @@ lambda body : #{cc.lambda_body}
             make_lambda(args, [ call_function(realname, args.map{|arg| "$#{arg}"}) ])
         end
 
+        def import_yaml(mod_name)
+            attach_context(make_lambda([], YAML.load_file(mod_name)), [])
+        end
+
         def initialize
             @context_stack = ContextStack.new(self)
 
@@ -165,6 +169,8 @@ lambda body : #{cc.lambda_body}
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
+                'import_yaml' => wrap_pseudo_function([], '__import_yaml'),
+
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
                 'variables' => wrap_pseudo_function([], '__local_variables'),
                 'expr' => wrap_pseudo_function([], '__expr'),
@@ -177,7 +183,7 @@ lambda body : #{cc.lambda_body}
 
             #とりあえず
 
-            attach_context(make_lambda([], YAML.load_file("#{File::dirname(__FILE__)}/kernel.yml")), [])
+            import_yaml("#{File::dirname(__FILE__)}/kernel.yml")
         end
 
         def eval_lambda(lambda, args, context)
@@ -361,6 +367,17 @@ lambda body : #{cc.lambda_body}
                     old, new = v
 
                     @context_stack.assign(new, @context_stack.variable(old).dup)
+                when '__import_yaml'
+                    modules = @context_stack.variable('args')
+
+                    @context_stack.meta_context do
+                        modules.each do |mod|
+                            import_yaml(mod)
+                        end
+                    end
+
+                    nil
+
                 when '__meta_context'
                     check_args(v, :array, :lambda)
 
