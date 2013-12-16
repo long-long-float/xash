@@ -3,9 +3,7 @@
     do: [[],
         { assign: [a, 20] },
         { meta_context: [[],
-            do: [[],
-                puts: [$a] #10
-            ]
+            do: [[], $a ]
         ]}
     ]
 ]
