@@ -70,7 +70,7 @@ lambda body : #{cc.lambda_body}
                 @variable_table.merge(@attached_table || {})
             end
 
-            def set_local_variable(name, val, with_warn)
+            def set_local_variable(name, val, with_warn = false)
                 if with_warn && @variable_table.key?(name)
                     warn "`#{name}` has been already assigned!"
                 end
@@ -115,7 +115,7 @@ lambda body : #{cc.lambda_body}
             end
 
             def assign(name, val)
-                @context_stack[-2].set_local_variable(name, val, true)
+                @context_stack[-2].set_local_variable(name, val)
             end
 
             def context(lambda, lambda_args)
@@ -166,8 +166,8 @@ lambda body : #{cc.lambda_body}
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
                 'variables' => wrap_pseudo_function([], '__local_variables'),
+                'expr' => wrap_pseudo_function([], '__expr'),
                 #literals
-                #'array' => wrap_pseudo_function([], '__array'),
                 'object' => wrap_pseudo_function(['obj'], '__object'),
                 'range' => wrap_pseudo_function(['a', 'b'], '__range'),
             }.each do |name, val|
@@ -262,6 +262,32 @@ lambda body : #{cc.lambda_body}
             end
         end
 
+        OPERATORS = {
+            '==' => ->(l, r){ l.eql? r },
+            '/=' => ->(l, r){ !(l.eql? r) },
+            'or' => ->(l, r){ l || r },
+            'and' => ->(l, r){ l && r },
+            'xor' => ->(l, r){ l ^ r },
+            '+' => ->(l, r){ l + r },
+            '-' => ->(l, r){ l - r },
+            'mul' => ->(l, r){ l * r },
+            'div' => ->(l, r){ l / r },
+            'mod' => ->(l, r){ l % r }
+        }
+
+        #convert tokens to "Reverse Polish Notation"
+        def to_rpn(tokens, rpn)
+            OPERATORS.each_key do |ope|
+                if idx = tokens.index(ope)
+                    to_rpn(tokens[0...idx], rpn)
+                    to_rpn(tokens[(idx + 1)...tokens.size], rpn)
+                    rpn << ope
+                    return 
+                end
+            end
+            rpn << tokens[0]
+        end
+
         def eval_expr(expr)
             case expr
             when Array
@@ -337,6 +363,25 @@ lambda body : #{cc.lambda_body}
                     ret_val
                 when '__local_variables'
                     @context_stack.variables
+                when '__expr'
+                    
+                    tokens = @context_stack.variable('args')
+
+                    rpn = []
+                    to_rpn(tokens, rpn)
+
+                    stack = []
+                    rpn.each do |token|
+                        stack << if OPERATORS.key? token
+                                r, l = stack.pop, stack.pop
+                                OPERATORS[token][l, r]
+                            else
+                                token
+                            end
+                    end
+
+                    stack[0]
+
                 when '__object'
                     check_args(v, :object)
                     puts "__object => #{v[0]}"

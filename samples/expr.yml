@@ -1,0 +1,11 @@
+- puts: [ expr: [1, +, 2, +, 3] ] #=> 6
+- puts: [ expr: [2, mul, 3, +, 4, mul, 5]] #=> 26
+
+- puts: [ expr: [5, mod, 2]] #=> 1
+
+- puts: [ expr: [true, or, false]] #=> true
+- puts: [ expr: [true, and, false]] #=> false
+- puts: [ expr: [true, xor, false]] #=> true
+
+- puts: [ expr: [1, +, 2, ==, 3]] #=> true
+- puts: [ expr: [1, +, 2, /=, 3]] #=> false
