@@ -1,2 +1,4 @@
 - if: [[true], do: [[], puts: OK]]  #=> OK
 - if: [[false], do: [[], puts: OK]]
+
+- if: [[5, mod, 2, ==, 1], do: [[], puts: 5 is odd]]

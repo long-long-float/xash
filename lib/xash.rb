@@ -322,10 +322,9 @@ lambda body : #{cc.lambda_body}
                     condition, lambda = v
 
                     condition = eval_expr(call_function('expr', condition))
-                    puts "if(#{v[0]}) => #{condition}"
 
                     unless condition == false or condition == 0 or condition == nil
-                        eval_lambda(lambda)
+                        push_context(lambda, [])
                     else
                         nil
                     end
