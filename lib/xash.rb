@@ -71,7 +71,7 @@ lambda body : #{cc.lambda_body}
             end
 
             def set_local_variable(name, val, with_warn)
-                if with_warn && @variable_table.key? name
+                if with_warn && @variable_table.key?(name)
                     warn "`#{name}` has been already assigned!"
                 end
                 @variable_table[name] = val
@@ -115,7 +115,7 @@ lambda body : #{cc.lambda_body}
             end
 
             def assign(name, val)
-                @context_stack[-2].set_local_variable(name, val)
+                @context_stack[-2].set_local_variable(name, val, true)
             end
 
             def context(lambda, lambda_args)
@@ -160,6 +160,7 @@ lambda body : #{cc.lambda_body}
 
             {
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
+                'if' => wrap_pseudo_function(['condition', 'lambda'], '__if'),
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
@@ -289,6 +290,20 @@ lambda body : #{cc.lambda_body}
                     collection.map do |e|
                         push_context(lambda, [e])
                     end
+                when '__if'
+                    check_args(v, :array, :lambda)
+
+                    condition, lambda = v
+
+                    condition = eval_expr(call_function('expr', condition))
+                    puts "if(#{v[0]}) => #{condition}"
+
+                    unless condition == false or condition == 0 or condition == nil
+                        eval_lambda(lambda)
+                    else
+                        nil
+                    end
+
                 when '__def'
                     check_args(v, :string)
 

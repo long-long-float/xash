@@ -1,0 +1,2 @@
+- if: [[true], do: [[], puts: OK]]  #=> OK
+- if: [[false], do: [[], puts: OK]]
