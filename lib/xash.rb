@@ -161,6 +161,7 @@ lambda body : #{cc.lambda_body}
             {
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 'if' => wrap_pseudo_function(['condition', 'lambda'], '__if'),
+                'case' => wrap_pseudo_function([], '__case'),
                 # define function
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
@@ -328,6 +329,11 @@ lambda body : #{cc.lambda_body}
                     else
                         nil
                     end
+
+                when '__case'
+                    args = @context_stack.variable('args')
+
+                    
 
                 when '__def'
                     check_args(v, :string)
