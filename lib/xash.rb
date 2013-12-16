@@ -289,6 +289,10 @@ lambda body : #{cc.lambda_body}
             rpn << tokens[0]
         end
 
+        def condition(cond)
+            !(cond == false or cond == 0 or cond == nil)
+        end
+
         def eval_expr(expr)
             case expr
             when Array
@@ -324,7 +328,7 @@ lambda body : #{cc.lambda_body}
 
                     condition = eval_expr(call_function('expr', condition))
 
-                    unless condition == false or condition == 0 or condition == nil
+                    if condition(condition)
                         push_context(lambda, [])
                     else
                         nil
@@ -333,7 +337,17 @@ lambda body : #{cc.lambda_body}
                 when '__case'
                     args = @context_stack.variable('args')
 
-                    
+                    #0 2 4 ...
+                    0.step(args.size, 2) do |i|
+                        unless lambda?(args[i])
+                            if condition(eval_expr(call_function('expr', args[i])))
+                                push_context(args[i + 1], [])
+                                break
+                            end
+                        else
+                            push_context(args[i], [])
+                        end
+                    end
 
                 when '__def'
                     check_args(v, :string)
@@ -415,7 +429,12 @@ lambda body : #{cc.lambda_body}
 
         def eval(code)
             code = Roconv.convert(code)
-            push_context(make_lambda([], code), [])
+            begin
+                push_context(make_lambda([], code), [])
+            #rescue
+                #error($!.class, $!.message)
+                #raise $!
+            end
         end
     end
 
