@@ -1,8 +1,10 @@
-- def: [rec,
-    do: [[],
-        { puts: [recursive!] },
-        { self: [] }
+- def: [fact,
+    do: [[n],
+        case: [
+            [n, '>=', 1], { do: [[], 1]  },
+            { do: [[], expr: [{ self: [ expr: [$n, -, 1]] }, mul, $n]] }
+        ]
     ]
 ]
 
-- rec: []
+- puts: [fact: [4]] #=> 24
