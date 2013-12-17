@@ -1,8 +1,8 @@
 - def: [fact,
     do: [[n],
         case: [
-            [n, '>=', 1], { do: [[], 1]  },
-            { do: [[], expr: [{ self: [ expr: [$n, -, 1]] }, mul, $n]] }
+            [n, '>=', 1], 1,
+            expr: [{ self: [ expr: [$n, -, 1]] }, mul, $n]
         ]
     ]
 ]

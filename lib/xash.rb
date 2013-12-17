@@ -280,11 +280,19 @@ lambda body : #{cc.lambda_body}
         OPERATORS = {
             '==' => ->(l, r){ l.eql? r },
             '/=' => ->(l, r){ !(l.eql? r) },
+
+            '>=' => ->(l, r){ l >= r },
+            '<=' => ->(l, r){ l <= r },
+            '>' => ->(l, r){ l > r },
+            '<' => ->(l, r){ l < r },
+
             'or' => ->(l, r){ l || r },
             'and' => ->(l, r){ l && r },
             'xor' => ->(l, r){ l ^ r },
+
             '+' => ->(l, r){ l + r },
             '-' => ->(l, r){ l - r },
+
             'mul' => ->(l, r){ l * r },
             'div' => ->(l, r){ l / r },
             'mod' => ->(l, r){ l % r }
