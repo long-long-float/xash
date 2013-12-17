@@ -211,6 +211,14 @@ lambda body : #{cc.lambda_body}
             end
         end
 
+        def exec(lambda, args)
+            if lambda? lambda
+                push_context(lambda, args)
+            else
+                eval_expr(lambda)
+            end
+        end
+
         def attach_context(lambda, args)
             @context_stack.attach(lambda['do'], args) do |c|
                 c.set_local_variable('it', args[0], false)
@@ -306,7 +314,7 @@ lambda body : #{cc.lambda_body}
             when Hash
                 k, v = expr.to_a[0]
 
-                no_eval = %w(do object)
+                no_eval = %w(do object if for)
 
                 k = eval_expr(k)
                 unless no_eval.index(k)
@@ -318,24 +326,23 @@ lambda body : #{cc.lambda_body}
                 when '__print'
                     print v.join
                 when '__for'
-                    check_args(v, :collection, :lambda)
+                    check_args(v, :collection)
 
                     collection, lambda = v
 
                     collection = to_collection(collection)
 
                     collection.map do |e|
-                        push_context(lambda, [e])
+                        exec(lambda, [e])
                     end
                 when '__if'
-                    check_args(v, :array, :lambda)
+                    check_args(v, :array)
 
                     condition, lambda = v
-
                     condition = eval_expr(call_function('expr', condition))
 
                     if condition(condition)
-                        push_context(lambda, [])
+                        exec(lambda, [])
                     else
                         nil
                     end
@@ -347,11 +354,11 @@ lambda body : #{cc.lambda_body}
                     0.step(args.size, 2) do |i|
                         unless lambda?(args[i])
                             if condition(eval_expr(call_function('expr', args[i])))
-                                push_context(args[i + 1], [])
+                                exec(args[i + 1], [])
                                 break
                             end
                         else
-                            push_context(args[i], [])
+                            exec(args[i], [])
                         end
                     end
 
