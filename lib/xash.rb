@@ -32,16 +32,16 @@ lambda body : #{cc.lambda_body}
         end
 
         class Context
-            attr_reader :lambda_body
+            attr_reader :lambda
 
-            def initialize(lambda, lambda_args)
+            def initialize(lambda, lambda_args, parent)
                 @variable_table = {}
-                lambda_args = lambda_args.dup
-                lambda[0].each do |arg|
-                    @variable_table[arg] = lambda_args.shift
-                end
 
-                @lambda_body = lambda[1]
+                @lambda = lambda
+
+                call(lambda_args)
+
+                @parent = parent
             end
 
             def attach(lambda, lambda_args)
@@ -76,6 +76,15 @@ lambda body : #{cc.lambda_body}
                 end
                 @variable_table[name] = val
             end
+
+            def call(lambda_args)
+                lambda_args = lambda_args.dup
+                @lambda[0].each do |arg|
+                    @variable_table[arg] = lambda_args.shift
+                end
+
+                self
+            end
         end
 
         class ContextStack
@@ -85,7 +94,7 @@ lambda body : #{cc.lambda_body}
                 @context_stack = []
 
                 #root context
-                @context_stack.push(Context.new([[]], []))
+                @context_stack.push(Context.new([[]], [], nil))
             end
 
             def exist_local_variable?(name)
@@ -119,7 +128,16 @@ lambda body : #{cc.lambda_body}
             end
 
             def context(lambda, lambda_args)
-                @context_stack.push(Context.new(lambda, lambda_args))
+                p lambda
+                context = case lambda
+                        when Hash #->(l) { lambda? l } #TODO: call lambda?
+                            Context.new(lambda['do'], lambda_args, current)
+                        when Context
+                            lambda.call(lambda_args)
+                        end
+
+                @context_stack.push context
+                puts @context_stack.inspect
                 ret = yield(self)
                 @context_stack.pop
                 ret
@@ -139,7 +157,7 @@ lambda body : #{cc.lambda_body}
             end
 
             def current
-                @context_stack.last.dup
+                @context_stack.last
             end
         end
 
@@ -170,6 +188,7 @@ lambda body : #{cc.lambda_body}
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
                 'import_yaml' => wrap_pseudo_function([], '__import_yaml'),
+                'boot' => wrap_pseudo_function(['lambda'], '__boot'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
                 'variables' => wrap_pseudo_function([], '__local_variables'),
@@ -202,7 +221,7 @@ lambda body : #{cc.lambda_body}
         end
 
         def push_context(lambda, args)
-            @context_stack.context(lambda['do'], args) do |c|
+            @context_stack.context(lambda, args) do |c|
                 c.set_local_variable('it', args[0])
                 c.set_local_variable('args', args)
                 c.set_local_variable('self', lambda)
@@ -212,9 +231,12 @@ lambda body : #{cc.lambda_body}
         end
 
         def exec(lambda, args)
-            if lambda? lambda
+            case lambda
+            when ->(l){ lambda? l }
                 push_context(lambda, args)
-            else
+            when Context
+                push_context(lambda, args)
+            when Hash
                 eval_expr(lambda)
             end
         end
@@ -226,6 +248,10 @@ lambda body : #{cc.lambda_body}
 
                 eval_lambda(lambda, args, c)
             end
+        end
+
+        def boot_context(lambda)
+            Context.new(lambda['do'], [], @context_stack.current)
         end
 
         def check_args(args, *types)
@@ -393,6 +419,13 @@ lambda body : #{cc.lambda_body}
 
                     nil
 
+                when '__boot'
+                    check_args(v, :lambda)
+
+                    lambda = v[0]
+
+                    boot_context(lambda)
+
                 when '__meta_context'
                     check_args(v, :array, :lambda)
 
@@ -447,7 +480,7 @@ lambda body : #{cc.lambda_body}
                 when ->(k) { lambda?(k) } #lambda call
                     push_context(k, v)
                 else #others
-                    push_context(@context_stack.variable(k), v)
+                    exec(@context_stack.variable(k), v)
                 end
             when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
                 #local variables

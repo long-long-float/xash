@@ -1,0 +1,13 @@
+- def: [make_get_name,
+    do: [[name],
+        boot: [
+            do: [[],
+                name
+            ]
+        ]
+    ]
+]
+
+- assign: [get_name, { make_get_name: [long_long_float]}]
+
+- get_name: []
