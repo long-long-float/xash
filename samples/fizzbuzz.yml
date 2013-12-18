@@ -2,10 +2,10 @@
 - for: [1..10,
     do: [[i],
         case: [
-            [$i, mod, 15, ==, 0], do: [ [], puts: [ FizzBuzz ] ],
-            [$i, mod, 3, ==, 0], do: [ [], puts: [ Fizz ] ],
-            [$i, mod, 5, ==, 0], do: [ [], puts: [ Buzz ] ],
-            do: [ [], puts: [ $i ] ]
+            [$i, mod, 15, ==, 0], FizzBuzz,
+            [$i, mod, 3, ==, 0], Fizz,
+            [$i, mod, 5, ==, 0], Buzz,
+            do: [[], $i]
         ]
     ]
 ]

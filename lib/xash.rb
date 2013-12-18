@@ -128,7 +128,6 @@ lambda body : #{cc.lambda_body}
             end
 
             def context(lambda, lambda_args)
-                p lambda
                 context = case lambda
                         when Hash #->(l) { lambda? l } #TODO: call lambda?
                             Context.new(lambda['do'], lambda_args, current)
@@ -137,7 +136,6 @@ lambda body : #{cc.lambda_body}
                         end
 
                 @context_stack.push context
-                puts @context_stack.inspect
                 ret = yield(self)
                 @context_stack.pop
                 ret
@@ -236,7 +234,7 @@ lambda body : #{cc.lambda_body}
                 push_context(lambda, args)
             when Context
                 push_context(lambda, args)
-            when Hash
+            else
                 eval_expr(lambda)
             end
         end
@@ -385,11 +383,10 @@ lambda body : #{cc.lambda_body}
                     args = @context_stack.variable('args')
 
                     #0 2 4 ...
-                    0.step(args.size, 2) do |i|
+                    0.step(args.size, 2).map do |i|
                         unless lambda?(args[i])
                             if condition(eval_expr(call_function('expr', args[i])))
-                                exec(args[i + 1], [])
-                                break
+                                break exec(args[i + 1], [])
                             end
                         else
                             exec(args[i], [])
