@@ -2,6 +2,8 @@ require 'xash/context'
 require 'xash/context_stack'
 require 'xash/type'
 
+require 'pp'
+
 module XASH
     class Evaluator
 
@@ -212,7 +214,7 @@ lambda body : #{cc.lambda_body}
                                 break exec(args[i + 1], [])
                             end
                         else
-                            exec(args[i], [])
+                            break exec(args[i], [])
                         end
                     end
 
