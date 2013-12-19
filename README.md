@@ -1,6 +1,6 @@
 # Xash
 
-TODO: Write a gem description
+> ##_Let's boot lambda._
 
 ## Installation
 
@@ -16,9 +16,13 @@ Or install it yourself as:
 
     $ gem install xash
 
+## Testing
+
+    $ rake test
+
 ## Usage
 
-TODO: Write usage instructions here
+see [wiki](https://github.com/long-long-float/xash/wiki/Document)
 
 ## Contributing
 
