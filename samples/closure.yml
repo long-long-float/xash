@@ -2,7 +2,7 @@
     do: [[name],
         boot: [
             do: [[],
-                name
+                $name
             ]
         ]
     ]

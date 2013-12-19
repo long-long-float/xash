@@ -1,6 +1,6 @@
 module XASH
     class Context
-        attr_reader :lambda
+        attr_reader :lambda, :parent
 
         def initialize(lambda, parent)
             @variable_table = {}
