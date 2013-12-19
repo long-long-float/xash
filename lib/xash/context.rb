@@ -21,9 +21,9 @@ module XASH
             yield(exprs)
         end
 
-        def attach(context, args)
+        def attach(context)
             @attaching_context = context
-            ret = context.exec(args){ yield }
+            ret = yield
             @attaching_context = nil
             ret
         end
@@ -41,7 +41,7 @@ module XASH
         end
 
         def variables
-            @variable_table.merge(@attached_table.variables || {})
+            @variable_table.merge(attaching_context_call(:variables) || {})
         end
 
         def set_local_variable(name, val, with_warn = true)

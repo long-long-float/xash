@@ -1,6 +1,7 @@
 require 'xash/context'
 require 'xash/context_stack'
 require 'xash/type'
+require 'xash/exception'
 
 require 'pp'
 
@@ -9,11 +10,11 @@ module XASH
 
         def error(klass, msg)
             cc = @context_stack.current
-            raise klass, <<-EOS
-variables : #{cc.variables.to_yaml}
-lambda body : #{cc.lambda_body}
-#{@context_stack.current} : #{msg}
-            EOS
+            raise klass, {
+                current_variables: cc.variables,
+                current_lambda: cc.lambda,
+                message: msg
+            }.to_yaml
         end
 
         def warn(msg)
@@ -33,7 +34,8 @@ lambda body : #{cc.lambda_body}
         end
 
         def import_yaml(mod_name)
-            attach_context(make_lambda([], YAML.load_file(mod_name)), [])
+            context = boot(make_lambda([], YAML.load_file(mod_name)))
+            exec_context(context, [])
         end
 
         def initialize
@@ -62,10 +64,6 @@ lambda body : #{cc.lambda_body}
             #とりあえず
 
             import_yaml("#{File::dirname(__FILE__)}/kernel.yml")
-        end
-
-        def attach_context(lambda, args)
-
         end
 
         def check_args(args, *types)
@@ -123,28 +121,30 @@ lambda body : #{cc.lambda_body}
             Context.new(lambda, @context_stack.current)
         end
 
+        def exec_context(context, args)
+            context.exec(args) do |exprs|
+                ret = nil
+                exprs.each do |expr|
+                    ret = eval_expr(expr)
+                    if context.exist_local_variable?('next_value')
+                        ret = context.variable('next_value')
+                        break
+                    end
+                end
+                ret
+            end
+        end
+
         def exec(executable, args)
             case executable
             when Context
                 @context_stack.push(executable) do
-                    executable.exec(args) do |exprs|
-                        ret = nil
-                        exprs.each do |expr|
-                            ret = eval_expr(expr)
-                            if executable.exist_local_variable?('next_value')
-                                ret = executable.variable('next_value')
-                                break
-                            end
-                        end
-                        ret
-                    end
+                    exec_context(executable, args)
                 end
             when ->(l){ Type.lambda? l }
                 exec(boot(executable), args)
-            when Hash
-                eval_expr(executable)
             else
-                raise NonExecutableError, "#{executable} is not executable!"
+                eval_expr(executable)
             end
         end
 
@@ -241,7 +241,10 @@ lambda body : #{cc.lambda_body}
                         #meta_context lambda
                         @context_stack.meta_context do
                             #meta context
-                            @context_stack.current.attach(boot(lambda), args)
+                            context = boot(lambda)
+                            @context_stack.current.attach(context) do
+                                exec_context(context, args)
+                            end
                         end
                     end
                 when '__next'
