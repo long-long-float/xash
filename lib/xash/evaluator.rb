@@ -64,53 +64,8 @@ lambda body : #{cc.lambda_body}
             import_yaml("#{File::dirname(__FILE__)}/kernel.yml")
         end
 
-        def eval_lambda(lambda, args, context)
-            lambda = lambda['do']
-            lambda_args, *exprs = lambda
-
-            ret = nil
-            exprs.each do |expr|
-                ret = eval_expr(expr)
-                if context.exist_local_variable?('next_value')
-                    ret = context.variable('next_value')
-                    break
-                end
-            end
-            ret
-        end
-
-        def push_context(lambda, args)
-            @context_stack.context(lambda, args) do |c|
-                c.set_local_variable('it', args[0])
-                c.set_local_variable('args', args)
-                c.set_local_variable('self', lambda)
-
-                eval_lambda(lambda, args, c)
-            end
-        end
-
-        def exec(lambda, args)
-            case lambda
-            when ->(l){ Type.lambda? l }
-                push_context(lambda, args)
-            when Context
-                push_context(lambda, args)
-            else
-                eval_expr(lambda)
-            end
-        end
-
         def attach_context(lambda, args)
-            @context_stack.attach(lambda['do'], args) do |c|
-                c.set_local_variable('it', args[0], false)
-                c.set_local_variable('args', args, false)
 
-                eval_lambda(lambda, args, c)
-            end
-        end
-
-        def boot_context(lambda)
-            Context.new(lambda['do'], [], @context_stack.current)
         end
 
         def check_args(args, *types)
@@ -162,6 +117,35 @@ lambda body : #{cc.lambda_body}
 
         def condition(cond)
             !(cond == false or cond == 0 or cond == nil)
+        end
+
+        def boot(lambda)
+            Context.new(lambda, @context_stack.current)
+        end
+
+        def exec(executable, args)
+            case executable
+            when Context
+                @context_stack.push(executable) do
+                    executable.exec(args) do |exprs|
+                        ret = nil
+                        exprs.each do |expr|
+                            ret = eval_expr(expr)
+                            if executable.exist_local_variable?('next_value')
+                                ret = executable.variable('next_value')
+                                break
+                            end
+                        end
+                        ret
+                    end
+                end
+            when ->(l){ Type.lambda? l }
+                exec(boot(executable), args)
+            when Hash
+                eval_expr(executable)
+            else
+                raise NonExecutableError, "#{executable} is not executable!"
+            end
         end
 
         def eval_expr(expr)
@@ -245,8 +229,7 @@ lambda body : #{cc.lambda_body}
                     check_args(v, :lambda)
 
                     lambda = v[0]
-
-                    boot_context(lambda)
+                    boot(lambda)
 
                 when '__meta_context'
                     check_args(v, :array, :lambda)
@@ -258,7 +241,7 @@ lambda body : #{cc.lambda_body}
                         #meta_context lambda
                         @context_stack.meta_context do
                             #meta context
-                            attach_context(lambda, args)
+                            @context_stack.current.attach(boot(lambda), args)
                         end
                     end
                 when '__next'
@@ -315,7 +298,7 @@ lambda body : #{cc.lambda_body}
         end
 
         def eval(code)
-            push_context(make_lambda([], code), [])
+            exec(make_lambda([], code), [])
         end
     end
 end

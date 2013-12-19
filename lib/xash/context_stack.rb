@@ -8,7 +8,14 @@ module XASH
             @context_stack = []
 
             #root context
-            @context_stack.push(Context.new([[]], [], nil))
+            @context_stack.push(Context.new({ 'do' => [[]]}, nil))
+        end
+
+        def push(context)
+            @context_stack.push context
+            ret = yield
+            @context_stack.pop
+            ret
         end
 
         def exist_local_variable?(name)
@@ -22,7 +29,7 @@ module XASH
 
         def variable(name)
             @context_stack.reverse_each do |context|
-                if context.defined_variable?(name)
+                if context.exist_local_variable?(name)
                     return context.variable(name)
                 end
             end
@@ -39,26 +46,6 @@ module XASH
 
         def assign(name, val)
             @context_stack[-2].set_local_variable(name, val)
-        end
-
-        def context(lambda, lambda_args)
-            context = case lambda
-                    when Hash #->(l) { lambda? l } #TODO: call lambda?
-                        Context.new(lambda['do'], lambda_args, current)
-                    when Context
-                        lambda.call(lambda_args)
-                    end
-
-            @context_stack.push context
-            ret = yield(self)
-            @context_stack.pop
-            ret
-        end
-
-        def attach(lambda, lambda_args)
-            @context_stack.last.attach(lambda, lambda_args) do
-                yield(self)
-            end
         end
 
         def meta_context

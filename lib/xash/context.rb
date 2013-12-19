@@ -2,56 +2,53 @@ module XASH
     class Context
         attr_reader :lambda
 
-        def initialize(lambda, lambda_args, parent)
+        def initialize(lambda, parent)
             @variable_table = {}
-
-            @lambda = lambda
-
-            call(lambda_args)
-
+            @lambda = lambda['do']
             @parent = parent
         end
 
-        def attach(lambda, lambda_args)
-            @attached_table = {}
-            lambda_args = lambda_args.dup
-            lambda[0].each do |arg|
-                @attached_table[arg] = lambda_args.shift
+        def exec(args)
+            lambda_arg, *exprs = @lambda
+
+            set_local_variable('it', args[0])
+            set_local_variable('args', args)
+
+            lambda_arg.each_with_index do |arg, i|
+                set_local_variable(arg, args[i], false)
             end
 
-            ret = yield
+            yield(exprs)
+        end
 
-            @attached_table = nil
-
+        def attach(context, args)
+            @attaching_context = context
+            ret = context.exec(args){ yield }
+            @attaching_context = nil
             ret
         end
 
-        def defined_variable?(name)
-            @variable_table.include?(name) || @attached_table && @attached_table.include?(name)
+        def attaching_context_call(name, *args)
+            @attaching_context && @attaching_context.call(name, *args)
+        end
+
+        def exist_local_variable?(name)
+            @variable_table.include?(name) || attaching_context_call(:exist_local_variable?, name)
         end
 
         def variable(name)
-            @variable_table[name] || @attached_table && @attached_table[name]
+            @variable_table[name] || attaching_context_call(:variable, name)
         end
 
         def variables
-            @variable_table.merge(@attached_table || {})
+            @variable_table.merge(@attached_table.variables || {})
         end
 
-        def set_local_variable(name, val, with_warn = false)
+        def set_local_variable(name, val, with_warn = true)
             if with_warn && @variable_table.key?(name)
                 warn "`#{name}` has been already assigned!"
             end
             @variable_table[name] = val
-        end
-
-        def call(lambda_args)
-            lambda_args = lambda_args.dup
-            @lambda[0].each do |arg|
-                @variable_table[arg] = lambda_args.shift
-            end
-
-            self
         end
     end
 end
