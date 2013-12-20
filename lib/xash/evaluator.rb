@@ -50,6 +50,9 @@ module XASH
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
                 'import_yaml' => wrap_pseudo_function([], '__import_yaml'),
                 'boot' => wrap_pseudo_function(['lambda'], '__boot'),
+                'class' => wrap_pseudo_function(['name', 'body'], '__class'),
+                'new' => wrap_pseudo_function([], '__new'),
+                'method' => wrap_pseudo_function([], '__method'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
                 'variables' => wrap_pseudo_function([], '__local_variables'),
@@ -230,6 +233,35 @@ module XASH
 
                     lambda = v[0]
                     boot(lambda)
+
+                when '__class'
+                    check_args(v, :string, :lambda)
+
+                    name, body = v
+
+                    @context_stack.assign(name, body)
+
+                when '__new'
+                    args = @context_stack.variable('args')
+                    check_args(args, :lambda)
+
+                    klass, *new_args = args
+
+                    context = boot(klass)
+                    exec(context, new_args)
+
+                    context
+
+                when '__method'
+                    seq = @context_stack.variable('args').dup
+
+                    obj = seq.shift
+                    until seq.empty?
+                        name, args = seq.shift, seq.shift
+                        obj = exec(obj.variable(name), args)
+                    end
+
+                    obj
 
                 when '__meta_context'
                     check_args(v, :array, :lambda)

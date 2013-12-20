@@ -3,8 +3,8 @@
     - do:
         - [name, age]
 
-        - def: [show, expr: [$name, +, " : ", +, $age]]
+        - def: [show, boot: [ do: [[], expr: [$name, +, " : ", +, $age]]]]
 
-- assign: [p, new: [Person, long_long_float, 18]]
+- assign: [p, new: [$Person, long_long_float, '18']]
 
 - method: [$p, show, []]
