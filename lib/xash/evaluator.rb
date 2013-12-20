@@ -153,7 +153,7 @@ module XASH
             when ->(l){ Type.lambda? l }
                 exec(boot(executable), args)
             else
-                eval_expr(executable)
+                exec(make_lambda([], [ executable ]), [])
             end
         end
 
