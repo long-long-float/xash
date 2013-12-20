@@ -45,18 +45,24 @@ module XASH
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 'if' => wrap_pseudo_function(['condition', 'lambda'], '__if'),
                 'case' => wrap_pseudo_function([], '__case'),
-                # define function
+
                 'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
+
                 'import_yaml' => wrap_pseudo_function([], '__import_yaml'),
+                
                 'boot' => wrap_pseudo_function(['lambda'], '__boot'),
-                'class' => wrap_pseudo_function(['name', 'body'], '__class'),
-                'new' => wrap_pseudo_function([], '__new'),
                 'method' => wrap_pseudo_function([], '__method'),
+
+                #for arrays
+                'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
+                'size' => wrap_pseudo_function(['ary'], '__size'),
+                'tail' => wrap_pseudo_function(['ary'], '__tail'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
                 'variables' => wrap_pseudo_function([], '__local_variables'),
                 'expr' => wrap_pseudo_function([], '__expr'),
+                
                 #literals
                 'object' => wrap_pseudo_function(['obj'], '__object'),
                 'range' => wrap_pseudo_function(['a', 'b'], '__range'),
@@ -234,24 +240,6 @@ module XASH
                     lambda = v[0]
                     boot(lambda)
 
-                when '__class'
-                    check_args(v, :string, :lambda)
-
-                    name, body = v
-
-                    @context_stack.assign(name, body)
-
-                when '__new'
-                    args = @context_stack.variable('args')
-                    check_args(args, :lambda)
-
-                    klass, *new_args = args
-
-                    context = boot(klass)
-                    exec(context, new_args)
-
-                    context
-
                 when '__method'
                     seq = @context_stack.variable('args').dup
 
@@ -262,6 +250,22 @@ module XASH
                     end
 
                     obj
+
+                when '__index'
+                    check_args(v, :array, :integer)
+
+                    ary, i = v
+
+                    ary[i]
+
+                when '__size'
+                    check_args(v, :array)
+                    v[0].size
+
+                when '__tail'
+                    check_args(v, :array)
+                    ary = v[0]
+                    ary[1...ary.size]
 
                 when '__meta_context'
                     check_args(v, :array, :lambda)
@@ -279,12 +283,7 @@ module XASH
                             end
                         end
                     end
-                when '__next'
-                    ret_val = v[0]
 
-                    @context_stack.next(ret_val)
-
-                    ret_val
                 when '__local_variables'
                     @context_stack.variables
                 when '__expr'
