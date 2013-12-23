@@ -1,5 +1,6 @@
 module XASH
     class Context
+        attr_accessor :name
         attr_reader :lambda, :parent
 
         def initialize(lambda, parent)
@@ -29,7 +30,7 @@ module XASH
         end
 
         def attaching_context_call(name, *args)
-            @attaching_context && @attaching_context.call(name, *args)
+            @attaching_context && @attaching_context.send(name, *args)
         end
 
         def exist_local_variable?(name)

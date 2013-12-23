@@ -3,8 +3,9 @@
     - do:
         - [name, age]
 
-        - def: [show, boot: [ do: [[], expr: [$name, +, " : ", +, $age]]]]
+        - mdef: [to_string, do: [[], expr: [$name, +, " : ", +, $age ] ]]
 
 - assign: [p, new: [$Person, long_long_float, '18']]
 
-- method: [$p, show, []]
+#- method: [$p, to_string, []]
+- method: [$p, long_long_float, []]

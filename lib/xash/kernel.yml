@@ -31,7 +31,7 @@
     ]
 ]
 
-#for class
+#for class system
 - alias: [def, class]
 
 - def: 
@@ -43,3 +43,14 @@
         - assign: [context, boot: [$klass]]
         - context: $new_args
         - $context
+
+- def: [mdef,
+    do: [[name, lambda],
+        meta_context: [[$name, boot: [$lambda]],
+            #do: [[name, lambda],
+            #    def: [$name, $lambda]
+            #]
+            $def
+        ]
+    ]
+]

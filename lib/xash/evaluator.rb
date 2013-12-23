@@ -126,8 +126,15 @@ module XASH
             !(cond == false or cond == 0 or cond == nil)
         end
 
-        def boot(lambda)
-            Context.new(lambda, @context_stack.current)
+        def boot(executable)
+            case executable
+            when Context
+                executable
+            when ->(l) { Type.lambda?(l) }
+                Context.new(executable, @context_stack.current)
+            else
+                boot(make_lambda([], [ executable ]))
+            end
         end
 
         def exec_context(context, args)
@@ -144,16 +151,16 @@ module XASH
             end
         end
 
-        def exec(executable, args)
+        def exec(executable, args, context_name = '<anonymous>')
             case executable
             when Context
+                executable.name = context_name
+
                 @context_stack.push(executable) do
                     exec_context(executable, args)
                 end
-            when ->(l){ Type.lambda? l }
-                exec(boot(executable), args)
-            else
-                exec(make_lambda([], [ executable ]), [])
+            else #lambda and mono expr
+                exec(boot(executable), args, context_name)
             end
         end
 
@@ -277,10 +284,18 @@ module XASH
                         #meta_context lambda
                         @context_stack.meta_context do
                             #meta context
+                            puts "meta context is ..."
+                            pp @context_stack.current.name
+                            pp @context_stack.current.variables
+
                             context = boot(lambda)
                             @context_stack.current.attach(context) do
                                 exec_context(context, args)
-                            end
+                            end.tap{
+                                puts "after ..."
+                                pp @context_stack.current.name
+                                pp @context_stack.current.variables
+                            }
                         end
                     end
 
@@ -319,7 +334,7 @@ module XASH
                 when ->(k) { Type.lambda?(k) } #lambda call
                     push_context(k, v)
                 else #others
-                    exec(@context_stack.variable(k), v)
+                    exec(@context_stack.variable(k), v, k)
                 end
             when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
                 #local variables
