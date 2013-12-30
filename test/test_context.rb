@@ -12,4 +12,8 @@ class ContextTest < Test::Unit::TestCase
     def test_class
         assert_equal 'long_long_float : 18', XASH_eval(:class)
     end
+
+    def test_extend
+        assert_equal %w(overridden func2), XASH_eval(:extend)
+    end
 end

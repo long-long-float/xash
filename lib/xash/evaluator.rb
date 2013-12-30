@@ -11,8 +11,10 @@ module XASH
         def error(klass, msg)
             cc = @context_stack.current
             raise klass, {
+                current_name: cc.name,
                 current_variables: cc.variables,
                 current_lambda: cc.lambda,
+                parent_name: cc.parent.name,
                 message: msg
             }.to_yaml
         end
@@ -312,6 +314,11 @@ module XASH
                     end
 
                     stack[0]
+
+                #for debug
+                when '__rb_inject'
+                    code = v[0]
+                    Kernel.eval(code, binding)
 
                 when '__object'
                     check_args(v, :object)

@@ -1,0 +1,18 @@
+- class:
+    - Base
+    - do:
+        - []
+
+        - mdef: [func1, do: [[], 'func1']]
+        - mdef: [func2, do: [[], 'func2']]
+
+- class:
+    - Sub
+    - do:
+        - []
+        - extends: [$Base]
+
+        - mdef: [func1, do: [[], 'overridden']]
+
+- assign: [obj, new: [$Sub]]
+- [ method: [$obj, func1, []], method: [$obj, func2, []] ]

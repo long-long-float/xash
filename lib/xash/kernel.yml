@@ -53,12 +53,8 @@
     ]
 ]
 
-- def: [extend,
+- def: [extends,
     do: [[klass],
-        meta_context: [[klass],
-            do: [[],
-                it: []
-            ]
-        ]
+        meta_context: [[], $klass]
     ]
 ]
