@@ -44,10 +44,10 @@
         - $context
 
 - def: [mdef,
-    do: [[__name, __lambda],
-        meta_context: [[$__name, boot: [$__lambda]],
-            do: [[__name, __lambda],
-                def: [$__name, $__lambda]
+    do: [[name, lambda],
+        meta_context: [[$name, $lambda],
+            do: [[name, lambda],
+                def: [$name, boot: [$lambda] ]
             ]
         ]
     ]
@@ -57,7 +57,7 @@
     do: [[klass],
         meta_context: [[klass],
             do: [[],
-                klass: []
+                it: []
             ]
         ]
     ]

@@ -2,6 +2,8 @@ require 'xash/context'
 
 module XASH
     class ContextStack
+        include Enumerable
+
         def initialize(evaluator)
             @evaluator = evaluator
 
@@ -9,6 +11,14 @@ module XASH
 
             #root context
             @context_stack.push(Context.new({ 'do' => [[]]}, nil))
+        end
+
+        def each
+            if block_given?
+                @context_stack.each{ |c| yield c }
+            else
+                @context_stack.each
+            end
         end
 
         def push(context)

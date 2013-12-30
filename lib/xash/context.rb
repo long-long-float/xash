@@ -34,11 +34,11 @@ module XASH
         end
 
         def exist_local_variable?(name)
-            @variable_table.include?(name) || attaching_context_call(:exist_local_variable?, name)
+            attaching_context_call(:exist_local_variable?, name) || @variable_table.include?(name) 
         end
 
         def variable(name)
-            @variable_table[name] || attaching_context_call(:variable, name)
+            attaching_context_call(:variable, name) || @variable_table[name] 
         end
 
         def variables
