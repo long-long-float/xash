@@ -44,12 +44,11 @@
         - $context
 
 - def: [mdef,
-    do: [[name, lambda],
-        meta_context: [[$name, boot: [$lambda]],
-            #do: [[name, lambda],
-            #    def: [$name, $lambda]
-            #]
-            $def
+    do: [[__name, __lambda],
+        meta_context: [[$__name, boot: [$__lambda]],
+            do: [[__name, __lambda],
+                def: [$__name, $__lambda]
+            ]
         ]
     ]
 ]

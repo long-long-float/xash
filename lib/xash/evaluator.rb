@@ -284,18 +284,11 @@ module XASH
                         #meta_context lambda
                         @context_stack.meta_context do
                             #meta context
-                            puts "meta context is ..."
-                            pp @context_stack.current.name
-                            pp @context_stack.current.variables
 
                             context = boot(lambda)
                             @context_stack.current.attach(context) do
                                 exec_context(context, args)
-                            end.tap{
-                                puts "after ..."
-                                pp @context_stack.current.name
-                                pp @context_stack.current.variables
-                            }
+                            end
                         end
                     end
 

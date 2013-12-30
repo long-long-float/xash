@@ -7,5 +7,4 @@
 
 - assign: [p, new: [$Person, long_long_float, '18']]
 
-#- method: [$p, to_string, []]
-- method: [$p, long_long_float, []]
+- method: [$p, to_string, []]
