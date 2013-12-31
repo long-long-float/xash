@@ -48,14 +48,14 @@ module XASH
 
         def variable(name)
             @context_stack.reverse_each do |context|
-                if context.exist_local_variable?(name)
+                if context.exist_variable?(name)
                     return context.variable(name)
                 end
             end
 
             cur = current
             while cur
-                if cur.exist_local_variable?(name)
+                if cur.exist_variable?(name)
                     return cur.variable(name)
                 end
                 cur = cur.parent
@@ -68,12 +68,16 @@ module XASH
             @context_stack.last.variables
         end
 
-        def set_local_variable(name, val, with_warn = false)
+        def set_local_variable(name, val, with_warn = true)
             @context_stack.last.set_local_variable(name, val, with_warn)
         end
 
         def assign(name, val)
-            @context_stack[-2].set_local_variable(name, val)
+            @context_stack[-2].set_local_variable(name, val, true)
+        end
+
+        def reassign(name, val)
+            @context_stack[-2].reset_local_variable(name, val)
         end
 
         def meta_context

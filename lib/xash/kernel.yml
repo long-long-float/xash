@@ -1,5 +1,7 @@
 #kernel library
 
+- alias: [assign, def]
+
 - def: [print,
     do: [[],
         __print: [$args]
@@ -11,8 +13,6 @@
         print: [$args, "\n"]
     ]
 ]
-
-- alias: [def, assign]
 
 - def: [array,
     do: [[],
@@ -33,6 +33,7 @@
 
 #for class system
 - alias: [def, class]
+- alias: [reassign, override]
 
 - def: 
     - new

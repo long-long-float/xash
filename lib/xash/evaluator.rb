@@ -14,7 +14,7 @@ module XASH
                 current_name: cc.name,
                 current_variables: cc.variables,
                 current_lambda: cc.lambda,
-                parent_name: cc.parent.name,
+                parent_name: cc.parent ? cc.parent.name : 'nil',
                 message: msg
             }.to_yaml
         end
@@ -48,7 +48,8 @@ module XASH
                 'if' => wrap_pseudo_function(['condition', 'lambda'], '__if'),
                 'case' => wrap_pseudo_function([], '__case'),
 
-                'def' => wrap_pseudo_function(['function_name', 'lambda'], '__def'),
+                'assign' => wrap_pseudo_function(['name', 'value'], '__assign'),
+                'reassign' => wrap_pseudo_function(['name', 'value'], '__reassign'),
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
 
                 'import_yaml' => wrap_pseudo_function([], '__import_yaml'),
@@ -144,7 +145,7 @@ module XASH
                 ret = nil
                 exprs.each do |expr|
                     ret = eval_expr(expr)
-                    if context.exist_local_variable?('next_value')
+                    if context.exist_variable?('next_value')
                         ret = context.variable('next_value')
                         break
                     end
@@ -220,12 +221,19 @@ module XASH
                         end
                     end
 
-                when '__def'
+                when '__assign'
                     check_args(v, :string)
 
-                    name, lambda = v
+                    name, value = v
 
-                    @context_stack.assign(name, lambda)
+                    @context_stack.assign(name, value)
+                when '__reassign'
+                    check_args(v, :string)
+
+                    name, value = v
+
+                    @context_stack.reassign(name, value)
+
                 when '__alias'
                     check_args(v, :string, :string)
 

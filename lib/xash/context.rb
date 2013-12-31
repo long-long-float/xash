@@ -12,8 +12,8 @@ module XASH
         def exec(args)
             lambda_arg, *exprs = @lambda
 
-            set_local_variable('it', args[0])
-            set_local_variable('args', args)
+            set_local_variable('it', args[0], false)
+            set_local_variable('args', args, false)
 
             lambda_arg.each_with_index do |arg, i|
                 set_local_variable(arg, args[i], false)
@@ -33,8 +33,8 @@ module XASH
             @attaching_context && @attaching_context.send(name, *args)
         end
 
-        def exist_local_variable?(name)
-            attaching_context_call(:exist_local_variable?, name) || @variable_table.include?(name) 
+        def exist_variable?(name)
+            attaching_context_call(:exist_variable?, name) || @variable_table.include?(name) 
         end
 
         def variable(name)
@@ -45,9 +45,16 @@ module XASH
             @variable_table.merge(attaching_context_call(:variables) || {})
         end
 
-        def set_local_variable(name, val, with_warn = true)
+        def set_local_variable(name, val, with_warn)
             if with_warn && @variable_table.key?(name)
                 warn "`#{name}` has been already assigned!"
+            end
+            @variable_table[name] = val
+        end
+
+        def reset_local_variable(name, val)
+            unless @variable_table.include? name
+                error UndefinedLocalVariableError, "undefined local variable `#{name}`"
             end
             @variable_table[name] = val
         end
