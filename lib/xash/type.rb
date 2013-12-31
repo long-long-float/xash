@@ -2,24 +2,20 @@ module XASH
     class Type
         class << self
 
-            def array?(array)
-                array.class == Array
-            end
-
-            def object?(object)
-                object.class == Hash
+            {
+                array: Array,
+                object: Hash,
+                string: String,
+                integer: Integer,
+                context: Context
+            }.each do |name, klass|
+                define_method "#{name}?" do |obj|
+                    obj.is_a? klass
+                end
             end
 
             def lambda?(lambda)
                 lambda.is_a? Hash and lambda.to_a[0][0] == 'do'
-            end
-
-            def string?(string)
-                string.class == String
-            end
-
-            def integer?(integer)
-                integer.class == Fixnum
             end
 
             def collection?(collection)

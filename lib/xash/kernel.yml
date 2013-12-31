@@ -20,6 +20,21 @@
     ]
 ]
 
+- def:
+    - expand
+    - do:
+        - [context]
+        - assign: [names, tail: [$args]]
+        - for: [$names,
+            do: [[],
+                meta_context: [[$it, get: [$context, $it]],
+                    do: [[name, value],
+                        assign: [$name, $value]
+                    ]
+                ]
+            ]
+        ]
+
 #escapes lambda
 - def: [next,
     do: [[next_value],

@@ -56,6 +56,7 @@ module XASH
                 
                 'boot' => wrap_pseudo_function(['lambda'], '__boot'),
                 'method' => wrap_pseudo_function([], '__method'),
+                'get' => wrap_pseudo_function(['obj', 'name'], '__get'),
 
                 #for arrays
                 'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
@@ -267,6 +268,13 @@ module XASH
                     end
 
                     obj
+
+                when '__get'
+                    check_args(v, :context, :string)
+
+                    context, name = v
+
+                    context.variable(name)
 
                 when '__index'
                     check_args(v, :array, :integer)

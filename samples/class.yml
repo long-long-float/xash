@@ -1,9 +1,4 @@
-- class:
-    - Person
-    - do:
-        - [name, age]
-
-        - mdef: [to_string, do: [[], expr: [$name, +, " : ", +, $age ] ]]
+- import_yaml: ['samples/person.yml']
 
 - assign: [p, new: [$Person, long_long_float, '18']]
 
