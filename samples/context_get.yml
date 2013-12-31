@@ -1,0 +1,4 @@
+- import_yaml: ['samples/person.yml']
+
+- assign: [p, new: [$Person, long_long_float, 18]]
+- get: [$p, name]

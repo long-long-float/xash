@@ -1,0 +1,6 @@
+- class:
+    - Person
+    - do:
+        - [name, age]
+
+        - mdef: [to_string, do: [[], expr: [$name, +, " : ", +, $age ] ]]

@@ -1,0 +1,3 @@
+- assign: [a, 1]
+- reassign: [a, 10]
+- $a
