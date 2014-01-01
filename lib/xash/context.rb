@@ -7,17 +7,18 @@ module XASH
             @variable_table = {}
             @lambda = lambda['do']
             @parent = parent
+            @name = '<anonymous>'
         end
 
         def exec(args)
-            lambda_arg, *exprs = @lambda
-
+            #lambda_arg, *exprs = @lambda
+            exprs = @lambda
             set_local_variable('it', args[0], false)
             set_local_variable('args', args, false)
 
-            lambda_arg.each_with_index do |arg, i|
-                set_local_variable(arg, args[i], false)
-            end
+            #lambda_arg.each_with_index do |arg, i|
+            #    set_local_variable(arg, args[i], false)
+            #end
 
             yield(exprs)
         end

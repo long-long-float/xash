@@ -3,6 +3,8 @@ require 'xash/context_stack'
 require 'xash/type'
 require 'xash/exception'
 
+require 'yaml'
+
 require 'pp'
 
 module XASH
@@ -10,9 +12,17 @@ module XASH
 
         def error(klass, msg)
             cc = @context_stack.current
+            variables = cc.variables.dup
+            if cc.name == '<root>'
+                variables = variables.each do |name, value|
+                    if @pseudo_functions.has_key? name
+                        variables[name] = '<internal>'
+                    end
+                end         
+            end
             raise klass, {
-                current_name: cc.name,
-                current_variables: cc.variables,
+                current_name: cc.name || 'nil',
+                current_variables: variables,
                 current_lambda: cc.lambda,
                 parent_name: cc.parent ? cc.parent.name : 'nil',
                 message: msg
@@ -28,7 +38,7 @@ module XASH
         end
 
         def make_lambda(args, exprs)
-            { 'do' => [args, *exprs] }
+            { 'do' => [ { 'ar' => args }, *exprs] }
         end
 
         def wrap_pseudo_function(args, realname)
@@ -36,14 +46,14 @@ module XASH
         end
 
         def import_yaml(mod_name)
-            context = boot(make_lambda([], YAML.load_file(mod_name)))
+            context = boot({ 'do' => YAML.load_file(mod_name) })
             exec_context(context, [])
         end
 
         def initialize
             @context_stack = ContextStack.new(self)
 
-            {
+            @pseudo_functions = {
                 'for' => wrap_pseudo_function(['collection', 'lambda'], '__for'),
                 'if' => wrap_pseudo_function(['condition', 'lambda'], '__if'),
                 'case' => wrap_pseudo_function([], '__case'),
@@ -58,6 +68,8 @@ module XASH
                 'method' => wrap_pseudo_function([], '__method'),
                 'get' => wrap_pseudo_function(['obj', 'name'], '__get'),
 
+                'ar' => { 'do' => [ call_function('__ar', '$args') ] },
+
                 #for arrays
                 'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
                 'size' => wrap_pseudo_function(['ary'], '__size'),
@@ -70,13 +82,15 @@ module XASH
                 #literals
                 'object' => wrap_pseudo_function(['obj'], '__object'),
                 'range' => wrap_pseudo_function(['a', 'b'], '__range'),
-            }.each do |name, val|
+            }
+            @pseudo_functions.each do |name, val|
                 @context_stack.set_local_variable(name, val)
             end
 
             #とりあえず
-
+            puts 'kernel load start'
             import_yaml("#{File::dirname(__FILE__)}/kernel.yml")
+            puts 'kernel load finish!'
         end
 
         def check_args(args, *types)
@@ -276,6 +290,15 @@ module XASH
 
                     context.variable(name)
 
+                when '__ar'
+                    names = v
+                    @context_stack.meta_context do
+                        args = @context_stack.variable('args')
+                    end
+                    names.zip(args) do |name, arg|
+                        @context_stack.assign(name, arg)
+                    end
+
                 when '__index'
                     check_args(v, :array, :integer)
 
@@ -351,7 +374,7 @@ module XASH
                     push_context(k, v)
                 else #others
                     exec(@context_stack.variable(k), v, k)
-                end
+                end 
             when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
                 #local variables
                 var_name = $1
@@ -363,7 +386,7 @@ module XASH
         end
 
         def eval(code)
-            exec(make_lambda([], code), [])
+            exec({ 'do' => code }, [])
         end
     end
 end

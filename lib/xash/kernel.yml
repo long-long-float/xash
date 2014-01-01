@@ -3,35 +3,38 @@
 - alias: [assign, def]
 
 - def: [print,
-    do: [[],
+    do: [
         __print: [$args]
     ]
 ]
 
 - def: [puts,
-    do: [[],
+    do: [
         print: [$args, "\n"]
     ]
 ]
 
 - def: [array,
-    do: [[],
+    do: [
         $args
     ]
 ]
 
 - def:
+    - meta_assign
+    - do:
+        - meta_context: [$args, $assign]
+
+- puts: [aaaaaaaaaaaaa]
+
+- def:
     - expand
     - do:
-        - [context]
+        - ar: [context]
         - assign: [names, tail: [$args]]
         - for: [$names,
-            do: [[],
-                meta_context: [[$it, get: [$context, $it]],
-                    do: [[name, value],
-                        assign: [$name, $value]
-                    ]
-                ]
+            do: [ ar: [],
+                meta_assign: [$it, get: [$context, $it]]
             ]
         ]
 
@@ -39,7 +42,7 @@
 - def: [next,
     do: [[next_value],
         meta_context: [[$next_value],
-            do: [[],
+            do: [
                 assign: [next_value, $it]
             ]
         ]
@@ -53,16 +56,16 @@
 - def: 
     - new
     - do:
-        - [klass]
+        - ar: [klass]
         - assign: [new_args, tail: [$args]]
         - assign: [context, boot: [$klass]]
         - context: $new_args
         - $context
 
 - def: [mdef,
-    do: [[name, lambda],
+    do: [ ar: [name, lambda],
         meta_context: [[$name, $lambda],
-            do: [[name, lambda],
+            do: [ ar: [name, lambda],
                 def: [$name, boot: [$lambda] ]
             ]
         ]
@@ -70,7 +73,7 @@
 ]
 
 - def: [extends,
-    do: [[klass],
+    do: [ ar: [klass],
         meta_context: [[], $klass]
     ]
 ]

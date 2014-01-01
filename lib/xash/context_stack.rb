@@ -10,7 +10,9 @@ module XASH
             @context_stack = []
 
             #root context
-            @context_stack.push(Context.new({ 'do' => [[]]}, nil))
+            root = Context.new({ 'do' => [] }, nil)
+            root.name = '<root>'
+            @context_stack.push(root)
         end
 
         def each
