@@ -88,9 +88,7 @@ module XASH
             end
 
             #とりあえず
-            puts 'kernel load start'
             import_yaml("#{File::dirname(__FILE__)}/kernel.yml")
-            puts 'kernel load finish!'
         end
 
         def check_args(args, *types)
@@ -316,17 +314,20 @@ module XASH
                     ary[1...ary.size]
 
                 when '__meta_context'
-                    check_args(v, :array, :lambda)
+                    check_args(v, :array, :executable)
 
                     args, lambda = v
 
                     #current
                     @context_stack.meta_context do
-                        #meta_context lambda
+                        current = @context_stack.current
+                        puts "current = #{current.name}"
+                        #caller
                         @context_stack.meta_context do
                             #meta context
 
                             context = boot(lambda)
+                            context.parent = current
                             @context_stack.current.attach(context) do
                                 exec_context(context, args)
                             end

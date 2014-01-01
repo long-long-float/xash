@@ -1,6 +1,7 @@
 - class:
     - Person
     - do:
-        - [name, age]
+        - ar: [name, age]
 
-        - mdef: [to_string, do: [[], expr: [$name, +, " : ", +, $age ] ]]
+        - mdef: [to_string, do: [expr: [ $name, +, ' : ', +, $age ] ]]
+        # - def: [to_string, boot: [ do: [expr: [ $name, +, " : ", +, $age ]]]]

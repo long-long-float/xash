@@ -1,7 +1,7 @@
 - def: [make_get_name,
-    do: [[name],
+    do: [ ar: [name],
         boot: [
-            do: [[],
+            do: [
                 $name
             ]
         ]

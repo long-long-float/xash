@@ -1,5 +1,5 @@
 - def: [say,
-    do: [[name],
+    do: [ ar: [name],
         print: [[hello, ' ', $name, '!', "\n"]]
     ]
 ]
@@ -7,7 +7,7 @@
 - say: long-long-float
 
 - def: [get_name,
-    do: [[],
+    do: [
         hoge
     ]
 ]
@@ -15,7 +15,7 @@
 - say: { get_name: }
 
 - def: [say_times,
-    do: [[name, num],
+    do: [ ar: [name, num],
         for: [ range: [0, $num],
             puts: { say: $name}
         ]

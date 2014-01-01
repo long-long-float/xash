@@ -22,6 +22,10 @@ module XASH
                 collection.is_a? Range or collection.is_a? String or collection.respond_to? :to_a
             end
 
+            def executable?(executable)
+                lambda?(executable) or context?(executable)
+            end
+
             def to_collection(collection)
                 case collection
                 when Range

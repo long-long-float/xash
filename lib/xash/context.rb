@@ -1,7 +1,7 @@
 module XASH
     class Context
-        attr_accessor :name
-        attr_reader :lambda, :parent
+        attr_accessor :name, :parent
+        attr_reader :lambda
 
         def initialize(lambda, parent)
             @variable_table = {}
@@ -11,15 +11,10 @@ module XASH
         end
 
         def exec(args)
-            #lambda_arg, *exprs = @lambda
             exprs = @lambda
             set_local_variable('it', args[0], false)
             set_local_variable('args', args, false)
-
-            #lambda_arg.each_with_index do |arg, i|
-            #    set_local_variable(arg, args[i], false)
-            #end
-
+            
             yield(exprs)
         end
 

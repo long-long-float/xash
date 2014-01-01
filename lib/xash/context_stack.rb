@@ -49,19 +49,21 @@ module XASH
         end
 
         def variable(name)
+            #search order
+            #parents -> context_stack(attached -> local)
             @context_stack.reverse_each do |context|
                 if context.exist_variable?(name)
                     return context.variable(name)
                 end
             end
-
+            
             cur = current
             while cur
                 if cur.exist_variable?(name)
                     return cur.variable(name)
                 end
                 cur = cur.parent
-            end
+            end            
 
             @evaluator.error UndefinedLocalVariableError, "undefined local variable `#{name}`"
         end
