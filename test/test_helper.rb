@@ -1,5 +1,4 @@
 require 'test/unit'
-require 'test/unit/notify'
 require 'xash'
 require 'yaml'
 

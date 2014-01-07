@@ -62,7 +62,7 @@
 
 - def: [mdef,
     do: [ ar: [name, lambda],
-        meta_context: [[],#[$name, $lambda],
+        meta_context: [[name, lambda],#[$name, $lambda],
             do: [ #ar: [name, lambda],
                 #__rb_inject: ["pp @context_stack.current.parent.name"],
                 def: [$name, boot: [$lambda] ]

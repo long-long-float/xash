@@ -320,14 +320,16 @@ module XASH
 
                     #current
                     @context_stack.meta_context do
-                        current = @context_stack.current
-                        puts "current = #{current.name}"
+                        caller = @context_stack.current
                         #caller
                         @context_stack.meta_context do
                             #meta context
 
                             context = boot(lambda)
-                            context.parent = current
+                            #context.parent = current
+                            args.each do |arg|
+                                context.set_local_variable(arg, caller.variable(arg), true)
+                            end
                             @context_stack.current.attach(context) do
                                 exec_context(context, args)
                             end
