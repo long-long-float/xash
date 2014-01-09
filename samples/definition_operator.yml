@@ -6,4 +6,4 @@
 ]
 
 - assign: [ary, [1, 2, 3]]
-- expr: [$ary, '!!', 1]
+- expr: [$ary, '\!!', 1]
