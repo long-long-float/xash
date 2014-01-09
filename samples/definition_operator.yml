@@ -1,0 +1,9 @@
+- def: ['!!',
+    do: [
+        ar: [ary, idx],
+        index: [$ary, $idx]
+    ]
+]
+
+- assign: [ary, [1, 2, 3]]
+- expr: [$ary, '!!', 1]

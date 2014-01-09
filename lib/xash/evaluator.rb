@@ -351,7 +351,12 @@ module XASH
                                 r, l = stack.pop, stack.pop
                                 OPERATORS[token][l, r]
                             else
-                                token
+                                if @context_stack.exist_local_variable?(token)
+                                    r, l = stack.pop, stack.pop
+                                    eval_expr(call_function(token, [l, r]))
+                                else
+                                    token
+                                end
                             end
                     end
 
