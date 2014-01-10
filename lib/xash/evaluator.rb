@@ -105,35 +105,39 @@ module XASH
         end
 
         OPERATORS = {
-            '(==)' => ->(l, ope, r){ l.eql? r },
-            '(/=)' => ->(l, ope, r){ !(l.eql? r) },
+            '==' => ->(l, r){ l.eql? r },
+            '/=' => ->(l, r){ !(l.eql? r) },
 
-            '(>=)' => ->(l, ope, r){ l >= r },
-            '(<=)' => ->(l, ope, r){ l <= r },
-            '(>)' => ->(l, ope, r){ l > r },
-            '(<)' => ->(l, ope, r){ l < r },
+            '>=' => ->(l, r){ l >= r },
+            '<=' => ->(l, r){ l <= r },
+            '>' => ->(l, r){ l > r },
+            '<' => ->(l, r){ l < r },
 
-            '(or)' => ->(l, ope, r){ l || r },
-            '(and)' => ->(l, ope, r){ l && r },
-            '(xor)' => ->(l, ope, r){ l ^ r },
+            'or' => ->(l, r){ l || r },
+            'and' => ->(l, r){ l && r },
+            'xor' => ->(l, r){ l ^ r },
 
-            '(\\+)' => ->(l, ope, r){ l + r },
-            '(-)' => ->(l, ope, r){ l - r },
+            '+' => ->(l, r){ l + r },
+            '-' => ->(l, r){ l - r },
 
-            '(mul)' => ->(l, ope, r){ l * r },
-            '(div)' => ->(l, ope, r){ l / r },
-            '(mod)' => ->(l, ope, r){ l % r },
-
-            %q(\\\\(.*)) => ->(l, ope, r){ eval_expr(call_function(ope, [r, l])) }
+            'mul' => ->(l, r){ l * r },
+            'div' => ->(l, r){ l / r },
+            'mod' => ->(l, r){ l % r }
         }
 
         #convert tokens to "Reverse Polish Notation"
         def to_rpn(tokens, rpn)
-            OPERATORS.each_key do |ope|
-                if idx = tokens.index{|token| token.is_a? String and Regexp.new(ope).match token } #TODO use Regexp http://stackoverflow.com/questions/5241653/ruby-regex-match-and-get-positions-of
+            (OPERATORS.keys + [/\\(\w+)/, /[-=^~|@`+;*:<.>?!%&_]+/]).each do |pattern|
+                idx, ope = if pattern.is_a? Regexp
+                            idx = tokens.index{|token| (token.is_a? String) && (m = pattern.match(token)) }
+                            [ idx, idx && $~[0] ]
+                        else
+                            [ tokens.index(pattern), pattern ]
+                        end
+                if idx
                     to_rpn(tokens[0...idx], rpn)
                     to_rpn(tokens[(idx + 1)...tokens.size], rpn)
-                    rpn << $1
+                    rpn << ope
                     return 
                 end
             end
@@ -356,7 +360,7 @@ module XASH
                     rpn.each do |token|
                         stack << if OPERATORS.key? token
                                 r, l = stack.pop, stack.pop
-                                OPERATORS[token][l, token, r]
+                                OPERATORS[token][l, r]
                             else
                                 if @context_stack.exist_variable?(token)
                                     r, l = stack.pop, stack.pop
