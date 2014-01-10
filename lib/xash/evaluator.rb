@@ -127,10 +127,10 @@ module XASH
 
         #convert tokens to "Reverse Polish Notation"
         def to_rpn(tokens, rpn)
-            (OPERATORS.keys + [/\\(\w+)/, /[-=^~|@`+;*:<.>?!%&_]+/]).each do |pattern|
+            (OPERATORS.keys + [/\\(\w+)/, /(^[-=^~|@`+;*:<.>?!%&_]+$)/]).each do |pattern|
                 idx, ope = if pattern.is_a? Regexp
                             idx = tokens.index{|token| (token.is_a? String) && (m = pattern.match(token)) }
-                            [ idx, idx && $~[0] ]
+                            [ idx, idx && $~[1] ]
                         else
                             [ tokens.index(pattern), pattern ]
                         end
@@ -209,7 +209,7 @@ module XASH
 
                     collection, lambda = v
 
-                    collection = Type.to_collection(collection)
+                    collection = Type.to_collection(eval_expr(collection))
 
                     collection.map do |e|
                         exec(lambda, [e])
@@ -348,13 +348,8 @@ module XASH
                     
                     tokens = @context_stack.variable('args')
 
-                    puts
-                    puts "tokens = #{tokens}"
- 
                     rpn = []
                     to_rpn(tokens, rpn)
-
-                    puts "rpn = #{rpn}"
 
                     stack = []
                     rpn.each do |token|
