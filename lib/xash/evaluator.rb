@@ -384,8 +384,6 @@ module XASH
                     expr #for lazy evaluation
 
                 #function call
-                when ->(k) { Type.lambda?(k) } #lambda call
-                    push_context(k, v)
                 else #others
                     exec(@context_stack.variable(k), v, k)
                 end 
