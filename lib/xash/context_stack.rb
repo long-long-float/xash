@@ -10,7 +10,9 @@ module XASH
             @context_stack = []
 
             #root context
-            @context_stack.push(Context.new({ 'do' => [[]]}, nil))
+            root = Context.new({ 'do' => [] }, nil)
+            root.name = '<root>'
+            @context_stack.push(root)
         end
 
         def each
@@ -28,31 +30,15 @@ module XASH
             ret
         end
 
-        def exist_local_variable?(name)
-            @context_stack.reverse_each do |context|
-                if context.exist_local_variable?(name)
-                    return true
-                end
-            end
-
-            cur = current
-            while cur
-                if cur.exist_local_variable?(name)
-                    return true
-                end
-                cur = cur.parent
-            end
-
-            false
-        end
-
-        def variable(name)
+        def get_variable(name)
+            #search order
+            #parents -> context_stack(attached -> local)
             @context_stack.reverse_each do |context|
                 if context.exist_variable?(name)
                     return context.variable(name)
                 end
             end
-
+            
             cur = current
             while cur
                 if cur.exist_variable?(name)
@@ -61,6 +47,20 @@ module XASH
                 cur = cur.parent
             end
 
+            raise UndefinedLocalVariableError, "undefined local variable `#{name}`"
+        end
+
+        def exist_variable?(name)
+            get_variable(name)
+        rescue
+            false
+        else
+            true
+        end
+
+        def variable(name)
+            get_variable(name)
+        rescue
             @evaluator.error UndefinedLocalVariableError, "undefined local variable `#{name}`"
         end
 

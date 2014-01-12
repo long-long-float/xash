@@ -1,0 +1,26 @@
+- def: ['!!',
+    do: [
+        ar: [ary, idx],
+        index: [$ary, $idx]
+    ]
+]
+
+- def: ['elem',
+    do: [
+        ar: [ary, e],
+        assign: [ret, false],
+        for: [$ary,
+            do: [
+                ar: [i],
+                puts: [$i, ' ', $e],
+                if: [[$i, ==, $e],
+                    do: [ reassign: [ret, true] ]
+                ]
+            ]
+        ],
+        $ret
+    ]
+]
+
+- assign: [ary, [1, 2, 3]]
+- expr: [$ary, '!!', 1]
