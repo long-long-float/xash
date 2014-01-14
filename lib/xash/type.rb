@@ -19,7 +19,7 @@ module XASH
             end
 
             def collection?(collection)
-                collection.is_a? Range or collection.is_a? String or collection.respond_to? :to_a
+                collection.is_a? String or collection.respond_to? :to_a
             end
 
             def executable?(executable)
@@ -28,12 +28,13 @@ module XASH
 
             def to_collection(collection)
                 case collection
-                when Range
-                    [*collection]
                 when String
                     collection.each_char.to_a
+                when ->(c){ c.is_a? Hash and c.key? 'range' }
+                    f, e, l = collection['range']
+                    Range.new(f.to_i, l.to_i, e == '...').to_a
                 else
-                    error TypeError, "`#{collection}` is not collection" unless collection? collection
+                    raise TypeError, "`#{collection}` is not collection" unless collection? collection
                     collection.to_a
                 end
             end

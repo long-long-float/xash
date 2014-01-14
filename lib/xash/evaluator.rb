@@ -80,8 +80,7 @@ module XASH
                 'expr' => wrap_pseudo_function([], '__expr'),
                 
                 #literals
-                'object' => wrap_pseudo_function(['obj'], '__object'),
-                'range' => wrap_pseudo_function(['a', 'b'], '__range'),
+                'object' => wrap_pseudo_function(['obj'], '__object')
             }
             @pseudo_functions.each do |name, val|
                 @context_stack.set_local_variable(name, val)
@@ -377,8 +376,6 @@ module XASH
                     check_args(v, :object)
                     puts "__object => #{v[0]}"
                     v[0]
-                when '__range'
-                    Range.new(v[0], v[1])
 
                 when 'do' #lambda
                     expr #for lazy evaluation
@@ -387,10 +384,11 @@ module XASH
                 else #others
                     exec(@context_stack.variable(k), v, k)
                 end 
-            when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
-                #local variables
+            when /\$(\w+)/ #local variables
                 var_name = $1
                 @context_stack.variable(var_name)
+            when /(\d+)(\.\.\.|\.\.)(\d+)/ #range expr
+                { 'range' => [$1, $2, $3] }
             else
                 #primitives
                 expr
