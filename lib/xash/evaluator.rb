@@ -72,15 +72,10 @@ module XASH
 
                 #for arrays
                 'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
-                'size' => wrap_pseudo_function(['ary'], '__size'),
                 'tail' => wrap_pseudo_function(['ary'], '__tail'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
-                'variables' => wrap_pseudo_function([], '__local_variables'),
-                'expr' => wrap_pseudo_function([], '__expr'),
-                
-                #literals
-                'object' => wrap_pseudo_function(['obj'], '__object')
+                'expr' => wrap_pseudo_function([], '__expr')
             }
             @pseudo_functions.each do |name, val|
                 @context_stack.set_local_variable(name, val)
