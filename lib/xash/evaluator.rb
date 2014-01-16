@@ -78,7 +78,7 @@ module XASH
                 'expr' => wrap_pseudo_function([], '__expr')
             }
             @pseudo_functions.each do |name, val|
-                @context_stack.set_local_variable(name, val)
+                @context_stack.current.set_local_variable(name, val, true)
             end
 
             #とりあえず
@@ -239,20 +239,20 @@ module XASH
 
                     name, value = v
 
-                    @context_stack.assign(name, value)
+                    @context_stack.meta.set_local_variable(name, value, true)
                 when '__reassign'
                     check_args(v, :string)
 
                     name, value = v
 
-                    @context_stack.reassign(name, value)
+                    @context_stack.meta.reset_local_variable(name, value)
 
                 when '__alias'
                     check_args(v, :string, :string)
 
                     old, new = v
 
-                    @context_stack.assign(new, @context_stack.variable(old).dup)
+                    @context_stack.meta.set_local_variable(new, @context_stack.variable(old).dup, true)
                 when '__import_yaml'
                     modules = @context_stack.variable('args')
 
@@ -262,7 +262,7 @@ module XASH
                         end
                     end
 
-                    nil
+                    true
 
                 when '__boot'
                     check_args(v, :lambda)
@@ -294,7 +294,7 @@ module XASH
                         args = @context_stack.variable('args')
                     end
                     names.zip(args) do |name, arg|
-                        @context_stack.assign(name, arg)
+                        @context_stack.meta.set_local_variable(name, arg, true)
                     end
 
                 when '__index'
@@ -303,10 +303,6 @@ module XASH
                     ary, i = v
 
                     ary[i]
-
-                when '__size'
-                    check_args(v, :array)
-                    v[0].size
 
                 when '__tail'
                     check_args(v, :array)
@@ -336,8 +332,6 @@ module XASH
                         end
                     end
 
-                when '__local_variables'
-                    @context_stack.variables
                 when '__expr'
                     
                     tokens = @context_stack.variable('args')
@@ -366,11 +360,6 @@ module XASH
                 when '__rb_inject'
                     code = v[0]
                     Kernel.eval(code, binding)
-
-                when '__object'
-                    check_args(v, :object)
-                    puts "__object => #{v[0]}"
-                    v[0]
 
                 when 'do' #lambda
                     expr #for lazy evaluation
