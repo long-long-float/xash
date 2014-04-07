@@ -72,19 +72,13 @@ module XASH
 
                 #for arrays
                 'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
-                'size' => wrap_pseudo_function(['ary'], '__size'),
                 'tail' => wrap_pseudo_function(['ary'], '__tail'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
-                'variables' => wrap_pseudo_function([], '__local_variables'),
-                'expr' => wrap_pseudo_function([], '__expr'),
-                
-                #literals
-                'object' => wrap_pseudo_function(['obj'], '__object'),
-                'range' => wrap_pseudo_function(['a', 'b'], '__range'),
+                'expr' => wrap_pseudo_function([], '__expr')
             }
             @pseudo_functions.each do |name, val|
-                @context_stack.set_local_variable(name, val)
+                @context_stack.current.set_local_variable(name, val, true)
             end
 
             #とりあえず
@@ -245,20 +239,20 @@ module XASH
 
                     name, value = v
 
-                    @context_stack.assign(name, value)
+                    @context_stack.meta.set_local_variable(name, value, true)
                 when '__reassign'
                     check_args(v, :string)
 
                     name, value = v
 
-                    @context_stack.reassign(name, value)
+                    @context_stack.meta.reset_local_variable(name, value)
 
                 when '__alias'
                     check_args(v, :string, :string)
 
                     old, new = v
 
-                    @context_stack.assign(new, @context_stack.variable(old).dup)
+                    @context_stack.meta.set_local_variable(new, @context_stack.variable(old).dup, true)
                 when '__import_yaml'
                     modules = @context_stack.variable('args')
 
@@ -268,7 +262,7 @@ module XASH
                         end
                     end
 
-                    nil
+                    true
 
                 when '__boot'
                     check_args(v, :lambda)
@@ -300,7 +294,7 @@ module XASH
                         args = @context_stack.variable('args')
                     end
                     names.zip(args) do |name, arg|
-                        @context_stack.assign(name, arg)
+                        @context_stack.meta.set_local_variable(name, arg, true)
                     end
 
                 when '__index'
@@ -309,10 +303,6 @@ module XASH
                     ary, i = v
 
                     ary[i]
-
-                when '__size'
-                    check_args(v, :array)
-                    v[0].size
 
                 when '__tail'
                     check_args(v, :array)
@@ -342,8 +332,6 @@ module XASH
                         end
                     end
 
-                when '__local_variables'
-                    @context_stack.variables
                 when '__expr'
                     
                     tokens = @context_stack.variable('args')
@@ -373,26 +361,18 @@ module XASH
                     code = v[0]
                     Kernel.eval(code, binding)
 
-                when '__object'
-                    check_args(v, :object)
-                    puts "__object => #{v[0]}"
-                    v[0]
-                when '__range'
-                    Range.new(v[0], v[1])
-
                 when 'do' #lambda
                     expr #for lazy evaluation
 
                 #function call
-                when ->(k) { Type.lambda?(k) } #lambda call
-                    push_context(k, v)
                 else #others
                     exec(@context_stack.variable(k), v, k)
                 end 
-            when ->(expr){ expr.is_a? String and expr =~ /\$(\w+)/ }
-                #local variables
+            when /\$(\w+)/ #local variables
                 var_name = $1
                 @context_stack.variable(var_name)
+            when /(\d+)(\.\.\.|\.\.)(\d+)/ #range expr
+                { 'range' => [$1, $2, $3] }
             else
                 #primitives
                 expr

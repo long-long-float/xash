@@ -1,4 +1,0 @@
-- assign: [name, long-long-float]
-- assign: [age, 9999]
-
-- puts: [$name, $age]
