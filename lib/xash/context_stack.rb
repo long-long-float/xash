@@ -23,6 +23,18 @@ module XASH
             end
         end
 
+        def [](index)
+            @context_stack[index]
+        end
+
+        def current
+            @context_stack.last
+        end
+
+        def meta
+            @context_stack[-2]
+        end
+
         def push(context)
             @context_stack.push context
             ret = yield
@@ -64,31 +76,11 @@ module XASH
             @evaluator.error UndefinedLocalVariableError, "undefined local variable `#{name}`"
         end
 
-        def variables
-            @context_stack.last.variables
-        end
-
-        def set_local_variable(name, val, with_warn = true)
-            @context_stack.last.set_local_variable(name, val, with_warn)
-        end
-
-        def assign(name, val)
-            @context_stack[-2].set_local_variable(name, val, true)
-        end
-
-        def reassign(name, val)
-            @context_stack[-2].reset_local_variable(name, val)
-        end
-
         def meta_context
             current = @context_stack.pop
             ret = yield
             @context_stack.push(current)
             ret
-        end
-
-        def current
-            @context_stack.last
         end
     end
 end
