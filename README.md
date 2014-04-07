@@ -1,7 +1,5 @@
 # Xash
 
-> ##_Let's boot lambda._
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -20,7 +18,24 @@ Or install it yourself as:
 
     $ rake test
 
-## Usage
+## Example
+
+samples/fizzbuzz.yml
+```ruby
+#FizzBuzz
+- for: [1..10,
+    do: [ ar: [i],
+        case: [
+            [$i, mod, 15, ==, 0], FizzBuzz,
+            [$i, mod, 3, ==, 0], Fizz,
+            [$i, mod, 5, ==, 0], Buzz,
+            do: [$i]
+        ]
+    ]
+]
+```
+
+## Document
 
 see [wiki](https://github.com/long-long-float/xash/wiki/Document)
 
