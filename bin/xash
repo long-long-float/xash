@@ -5,7 +5,7 @@ require 'xash'
 require 'yaml'
 
 opts = Slop.parse do |o|
-  o.banner = "usage: #{__FILE__} [options] file"
+  o.banner = "usage: xash [options] file"
   o.separator 'YAML file can be only accepted'
   o.on '-v', '--version', 'print the version' do
     puts "Xash #{XASH::VERSION}"
