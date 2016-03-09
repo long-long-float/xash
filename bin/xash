@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+require 'slop'
+require 'xash'
+require 'yaml'
+
+opts = Slop.parse do |o|
+  o.banner = "usage: #{__FILE__} [options] file"
+  o.separator 'YAML file can be only accepted'
+  o.on '-v', '--version', 'print the version' do
+    puts "Xash #{XASH::VERSION}"
+    exit
+  end
+  o.on '-h', '--help', 'print this help' do
+    puts o
+    exit
+  end
+end
+
+args = opts.arguments
+if args.empty?
+  puts opts
+else
+  puts XASH.eval(YAML.load(ARGF.read)).to_yaml
+end

@@ -2,17 +2,11 @@
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem 'xash'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
     $ gem install xash
+
+## Usage
+
+    $ xash file.yml
 
 ## Testing
 
