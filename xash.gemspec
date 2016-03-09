@@ -5,7 +5,7 @@ require 'xash/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "xash"
-  spec.version       = Xash::VERSION
+  spec.version       = XASH::VERSION
   spec.authors       = ["long-long-float"]
   spec.email         = ["niinikazuki@yahoo.co.jp"]
   spec.description   = %q{XASH is a external DSL which can be written in YAML!}
@@ -18,6 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "slop", "~> 4.2"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
+  spec.add_development_dependency "test-unit"
 end
