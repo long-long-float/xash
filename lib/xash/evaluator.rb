@@ -72,7 +72,9 @@ module XASH
 
                 #for arrays
                 'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
+                'head' => wrap_pseudo_function(['ary'], '__head'),
                 'tail' => wrap_pseudo_function(['ary'], '__tail'),
+                'cons' => wrap_pseudo_function(['val', 'ary'], '__cons'),
                 'join' => wrap_pseudo_function(['ary', 'sep'], '__join'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
@@ -305,10 +307,19 @@ module XASH
 
                     ary[i]
 
+                when '__head'
+                    check_args(v, :array)
+                    v[0][0]
+
                 when '__tail'
                     check_args(v, :array)
                     ary = v[0]
                     ary[1...ary.size]
+
+                when '__cons'
+                    check_args(v, nil, :array)
+                    val, ary = v
+                    ary.dup.unshift(val)
 
                 when '__join'
                     check_args(v, :array, :string)
