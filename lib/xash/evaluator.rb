@@ -18,7 +18,7 @@ module XASH
                     if @pseudo_functions.has_key? name
                         variables[name] = '<internal>'
                     end
-                end         
+                end
             end
             raise klass, {
                 current_name: cc.name || 'nil',
@@ -63,7 +63,7 @@ module XASH
                 'alias' => wrap_pseudo_function(['old', 'new'], '__alias'),
 
                 'import_yaml' => wrap_pseudo_function([], '__import_yaml'),
-                
+
                 'boot' => wrap_pseudo_function(['lambda'], '__boot'),
                 'method' => wrap_pseudo_function([], '__method'),
                 'get' => wrap_pseudo_function(['obj', 'name'], '__get'),
@@ -73,6 +73,7 @@ module XASH
                 #for arrays
                 'index' => wrap_pseudo_function(['ary', 'i'], '__index'),
                 'tail' => wrap_pseudo_function(['ary'], '__tail'),
+                'join' => wrap_pseudo_function(['ary', 'sep'], '__join'),
 
                 'meta_context' => wrap_pseudo_function(%w(lambda_args lambda), '__meta_context'),
                 'expr' => wrap_pseudo_function([], '__expr')
@@ -132,7 +133,7 @@ module XASH
                     to_rpn(tokens[0...idx], rpn)
                     to_rpn(tokens[(idx + 1)...tokens.size], rpn)
                     rpn << ope
-                    return 
+                    return
                 end
             end
             rpn << tokens[0]
@@ -309,6 +310,11 @@ module XASH
                     ary = v[0]
                     ary[1...ary.size]
 
+                when '__join'
+                    check_args(v, :array, :string)
+                    ary, sep = v
+                    ary.join(sep)
+
                 when '__meta_context'
                     check_args(v, :array, :executable)
 
@@ -333,7 +339,7 @@ module XASH
                     end
 
                 when '__expr'
-                    
+
                     tokens = @context_stack.variable('args')
 
                     rpn = []
