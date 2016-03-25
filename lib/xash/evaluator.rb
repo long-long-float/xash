@@ -373,12 +373,12 @@ module XASH
                 #function call
                 else #others
                     exec(@context_stack.variable(k), v, k)
-                end 
-            when /\$(\w+)/ #local variables
+                end
+            when /\A\$(\w+)/ #local variables
                 var_name = $1
                 @context_stack.variable(var_name)
-            when /(\d+)(\.\.\.|\.\.)(\d+)/ #range expr
-                { 'range' => [$1, $2, $3] }
+            when /([\w\$]+)(\.\.\.|\.\.)([\w\$]+)/ #range expr
+                { 'range' => [$1, $2, $3].map{|e| eval_expr(e) } }
             else
                 #primitives
                 expr
